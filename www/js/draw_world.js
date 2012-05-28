@@ -89,5 +89,22 @@ function drawShape(shape, context) {
 		break;
 	}
 	context.stroke();
+
+    /* draw velocity vector */
+    context.strokeStyle = "#dd2222";
+    context.beginPath();
+    context.moveTo(shape.m_position.x, shape.m_position.y);
+    var tV = b2Math.AddVV(shape.m_position, b2Math.MulFV(0.5, shape.m_body.m_linearVelocity));
+    context.lineTo(tV.x, tV.y);
+    context.stroke();
+
+    /* and force vector */
+    context.strokeStyle = "#22dd22";
+    context.beginPath();
+    context.moveTo(shape.m_position.x, shape.m_position.y);
+    var tV = b2Math.AddVV(shape.m_position, b2Math.MulFV(0.5, shape.m_body.m_force));
+    context.lineTo(tV.x, tV.y);
+    context.stroke();
+
 }
 

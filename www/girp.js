@@ -1,8 +1,7 @@
-/**
- * Created with JetBrains PhpStorm.
- * User: steven
- * Date: 28/05/12
- * Time: 19:24
+/*
+ * This file is part of jsgirp
+ * Copyright (c) 2003-2012 Steven Dickinson
+ * Released under the terms of the GNU GPL version 3
  */
 
 var girpgame = function() {
@@ -21,6 +20,9 @@ girpgame.prototype.initWorld = function(world) {
     this.upperArmPos = { x: this.upperArmLength, y: 0.8 * this.bodySize.h / 2 };
     this.lowerArmLength = 80;
 
+    /* input flags */
+    this.leftArm = this.rightArm = 0;
+
     this.world = world;
 
     /* Create a floor */
@@ -31,6 +33,23 @@ girpgame.prototype.initWorld = function(world) {
     body.AddShape(shape);
     body.position.Set(0, 600);
     this.world.CreateBody(body);
+
+    /* create a little target too */
+    body = new b2BodyDef();
+    shape = new b2BoxDef();
+    shape.extents.Set(10, 10);
+    body.AddShape(shape);
+    body.position.Set(50, 50);
+    this.goal = this.world.CreateBody(body);
+
+    /* create another little target too */
+    body = new b2BodyDef();
+    shape = new b2BoxDef();
+    shape.extents.Set(10, 10);
+    body.AddShape(shape);
+    body.position.Set(550, 50);
+    this.goal2 = this.world.CreateBody(body);
+
 
     /* Create the player */
     this.player = {};
@@ -112,5 +131,47 @@ girpgame.prototype.initArm = function(dest, dir) {
     rjd.upperAngle = 0.5 * 3.14159;
     rjd.enableLimit = true;
     this.world.CreateJoint(rjd);
+};
+
+girpgame.prototype.tick = function() {
+    if (this.leftArm) {
+        this.reachFor(this.player.left.lowerArm, this.goal);
+    }
+    if (this.rightArm) {
+        this.reachFor(this.player.right.lowerArm, this.goal2);
+    }
+}
+
+girpgame.prototype.reachFor = function(arm, goal) {
+    var goalPosition = goal.m_position.Copy();
+    var force = b2Math.SubtractVV(goalPosition, arm.m_position);
+    force.Normalize();
+    force.Multiply(5000000);
+
+    var pos = b2Math.AddVV(arm.m_position, b2Math.b2MulMV(arm.m_R, { x: 0, y: this.lowerArmLength / 2}));
+    arm.ApplyForce(force, pos);
+};
+
+girpgame.prototype.bindInput = function(el) {
+    Event.observe(window, 'keydown', function(event) {
+        this.input(event.keyCode, 1);
+    }.bind(this));
+    Event.observe(window, 'keyup', function(event) {
+        this.input(event.keyCode, 0);
+    }.bind(this));
+};
+
+
+girpgame.prototype.input = function(keyCode, down) {
+    switch(keyCode) {
+    case 82:
+        this.leftArm = down;
+        break;
+    case 84:
+        this.rightArm = down;
+        break;
+    default:
+        window.console.log("skipped " + event.keyCode);
+    }
 
 };

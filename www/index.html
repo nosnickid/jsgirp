@@ -89,6 +89,10 @@
     var world;
     var girp;
 
+    var canvas = $("display");
+    var ctx = canvas.getContext('2d');
+    var canvasWidth = canvas.width;
+    var canvasHeight = canvas.height;
 
     function init() {
         var worldAABB = new b2AABB();
@@ -101,17 +105,14 @@
 
         girp = new girpgame();
         girp.initWorld(world);
+        girp.bindInput(window);
     }
-
-    var canvas = $("display");
-    var ctx = canvas.getContext('2d');
-    var canvasWidth = canvas.width;
-    var canvasHeight = canvas.height;
 
     function step(cnt) {
         var stepping = false;
         var timeStep = 1.0/60;
         var iteration = 1;
+        girp.tick();
         world.Step(timeStep, iteration);
         ctx.clearRect(0, 0, canvasWidth, canvasHeight);
         drawWorld(world, ctx);
@@ -121,7 +122,7 @@
     }
 
     init();
-    step(0);
+    step(1);
 
 </script>
 
