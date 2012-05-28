@@ -86,17 +86,22 @@
 <script src="girp.js" type="text/javascript" type="text/javascript"></script>
 
 <script type="text/javascript">
-    var worldAABB = new b2AABB();
-    worldAABB.minVertex.Set(-1000, -1000);
-    worldAABB.maxVertex.Set(1000, 1000);
-    var gravity = new b2Vec2(0, 300);
-    var doSleep = true;
-    var world = new b2World(worldAABB, gravity, doSleep);
+    var world;
+    var girp;
 
 
-    var girp = new girpgame();
-    girp.initWorld(world);
-    //girp.initWorld(world);
+    function init() {
+        var worldAABB = new b2AABB();
+        worldAABB.minVertex.Set(-1000, -1000);
+        worldAABB.maxVertex.Set(1000, 1000);
+        var gravity = new b2Vec2(0, 300);
+        var doSleep = true;
+
+        world = new b2World(worldAABB, gravity, doSleep);
+
+        girp = new girpgame();
+        girp.initWorld(world);
+    }
 
     var canvas = $("display");
     var ctx = canvas.getContext('2d');
@@ -110,12 +115,17 @@
         world.Step(timeStep, iteration);
         ctx.clearRect(0, 0, canvasWidth, canvasHeight);
         drawWorld(world, ctx);
-        setTimeout('step(' + (cnt || 0) + ')', 10);
+        if (cnt > 0) {
+            setTimeout('step(' + (cnt || 0) + ')', 10);
+        }
     }
 
+    init();
     step(0);
 
 </script>
+
+<div style="cursor: pointer;" onclick="init(); step(1)">go</div>
 
 </body>
 </html>
