@@ -69,7 +69,7 @@ girpgame.prototype.initWorld = function(world) {
     };
     this.calfLength = 80;
     this.calfWidth = 6;
-    this.calfDensity = 0.3;
+    this.calfDensity = 1;
 
     this.heaveFactor = 8000000;
 
@@ -154,9 +154,8 @@ girpgame.prototype.tick = function() {
         this.reachFor(this.player.right.upperArm, this.upperArmLength, 1, this.goal2);
     }
 
-    if (this.leftArmNode && this.heave) {
-        this.leftHandHeave();
-    }
+    this.doHeave(this.player.left, this.leftArmNode && this.heave);
+    this.doHeave(this.player.right, this.rightArmNode && this.heave);
 };
 
 
@@ -202,7 +201,7 @@ girpgame.prototype.initArm = function(dest, dir) {
     rjd.lowerAngle = -0.9 * 3.14159;
     rjd.upperAngle = 0.9 * 3.14159;
     rjd.enableLimit = true;
-    this.world.CreateJoint(rjd);
+    dest.shoulder = this.world.CreateJoint(rjd);
 
     /* keep the ref to the upper arm def around so we can use it for position */
     prevBody = body;
@@ -229,7 +228,9 @@ girpgame.prototype.initArm = function(dest, dir) {
     );
     rjd.body1 = dest.upperArm;
     rjd.body2 = dest.lowerArm;
-    rjd.enableMotor = false;
+    rjd.enableMotor = true;
+    rjd.motorSpeed = 5;
+    rjd.motorTorque = 1000000000000;
     if (dir < 0) {
         rjd.lowerAngle = 0;
         rjd.upperAngle = 0.5 * 3.14159;
@@ -238,7 +239,7 @@ girpgame.prototype.initArm = function(dest, dir) {
         rjd.upperAngle = 0;
     }
     rjd.enableLimit = true;
-    this.world.CreateJoint(rjd);
+    dest.elbow = this.world.CreateJoint(rjd);
 
 };
 
@@ -276,31 +277,8 @@ girpgame.prototype.reachFor = function(arm, armLength, dir, goal) {
     arm.ApplyForce(force, forcePos);
 };
 
-girpgame.prototype.leftHandHeave = function() {
-    var arm = this.player.left.lowerArm;
-    var otherArm = this.player.right.upperArm;
-
-    /* the position of the hand at the end of the lower arm */
-    var handPos = b2Math.AddVV(
-        arm.m_position,
-        b2Math.b2MulMV(arm.m_R, { y: 0, x: -this.lowerArmLength / 2})
-    );
-
-    // drawVector(handPos.x, handPos.y, handPos.x, handPos.y + 50, "#ffff00");
-
-    /* the "shoulder" */
-    var forcePos = b2Math.AddVV(
-        otherArm.m_position,
-        b2Math.b2MulMV(otherArm.m_R, { y: 0, x: -this.upperArmLength / 2})
-    );
-
-    drawVector(handPos.x, handPos.y, forcePos.x, forcePos.y, "#ffff00");
-
-    var force = b2Math.SubtractVV(handPos, forcePos);
-    force.Normalize();
-    force.Multiply(this.heaveFactor);
-
-    this.player.torso.ApplyForce(force, forcePos)
+girpgame.prototype.doHeave = function(side, heave) {
+    side.elbow.m_enableMotor = heave;
 };
 
 
