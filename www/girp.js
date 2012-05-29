@@ -14,7 +14,7 @@ girpgame.prototype.initWorld = function(world) {
     var prevBody;
 
     /* all sizes used to define the shape of the player. */
-    this.bodyCenter = { x: 350, y: 150 };
+    this.bodyCenter = { x: 220, y: 100 };
     this.bodySize = { w: 80, h: 120 };
     this.upperArmLength = 60;
     this.upperArmPos = { x: this.upperArmLength, y: 0.8 * this.bodySize.h / 2 };
@@ -68,6 +68,18 @@ girpgame.prototype.initWorld = function(world) {
 
     this.initArm(this.player.left, -1);
     this.initArm(this.player.right, 1);
+
+    /* hax0r fix left arm to a position */
+    var rjd = new b2RevoluteJointDef();
+    rjd.anchorPoint.Set(55, 55);
+    rjd.body1 = this.player.left.lowerArm;
+    rjd.body2 = this.goal;
+    rjd.enableMotor = false;
+    rjd.lowerAngle = -0.5 * 3.14159;
+    rjd.upperAngle = 0.5 * 3.14159;
+    rjd.enableLimit = true;
+    this.world.CreateJoint(rjd);
+
 };
 
 girpgame.prototype.initArm = function(dest, dir) {
@@ -131,6 +143,7 @@ girpgame.prototype.initArm = function(dest, dir) {
     rjd.upperAngle = 0.5 * 3.14159;
     rjd.enableLimit = true;
     this.world.CreateJoint(rjd);
+
 };
 
 girpgame.prototype.tick = function() {
