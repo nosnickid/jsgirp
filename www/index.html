@@ -93,6 +93,7 @@
     var ctx = canvas.getContext('2d');
     var canvasWidth = canvas.width;
     var canvasHeight = canvas.height;
+    var timeout;
 
     window.setRenderContext(ctx);
 
@@ -108,27 +109,34 @@
         girp = new girpgame();
         girp.initWorld(world);
         girp.bindInput(window);
+        clearTimeout(timeout);
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+        window.drawWorld(world);
     }
 
     function step(cnt) {
         var stepping = false;
         var timeStep = 1.0/60;
         var iteration = 1;
-        girp.tick();
         world.Step(timeStep, iteration);
-        ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-        window.drawWorld(world);
+        girp.tick();
+        draw();
         if (cnt > 0) {
-            setTimeout('step(' + (cnt || 0) + ')', 10);
+            timeout = setTimeout('step(' + (cnt || 0) + ')', 10);
         }
     }
 
     init();
-    step(1);
+    step(0);
 
 </script>
 
 <div style="cursor: pointer;" onclick="init(); step(1)">go</div>
+<div style="cursor: pointer;" onclick="init(); draw()">reset</div>
+
 
 </body>
 </html>

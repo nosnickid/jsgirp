@@ -8,6 +8,34 @@ var girpgame = function() {
     return this;
 };
 
+/**
+ * Initialisation function to set up input listeners.
+ * @param el
+ */
+girpgame.prototype.bindInput = function(el) {
+    Event.observe(window, 'keydown', function(event) {
+        this.input(event.keyCode, 1);
+    }.bind(this));
+    Event.observe(window, 'keyup', function(event) {
+        this.input(event.keyCode, 0);
+    }.bind(this));
+};
+
+
+girpgame.prototype.input = function(keyCode, down) {
+    switch(keyCode) {
+        case 82:
+            this.leftArm = down;
+            break;
+        case 84:
+            this.rightArm = down;
+            break;
+        default:
+            window.console.log("skipped " + event.keyCode);
+    }
+
+};
+
 girpgame.prototype.initWorld = function(world) {
     var shape;
     var body;
@@ -17,12 +45,25 @@ girpgame.prototype.initWorld = function(world) {
     this.bodyCenter = { x: 220, y: 100 };
     this.bodySize = { w: 80, h: 120 };
     this.bodyAngularDamping = 0.9999;
+    /* arm setup */
     this.upperArmLength = 60;
     this.upperArmDensity = 0.6;
-    this.upperArmPos = { x: this.upperArmLength, y: 0.8 * this.bodySize.h / 2 };
+    this.upperArmPos = {
+        x: this.upperArmLength,
+        y: 0.8 * this.bodySize.h / 2
+    };
     this.lowerArmLength = 80;
     this.lowerArmDensity = 0.3;
     this.armAngularDamping = 1;
+    /* leg setup */
+    this.thighLength = 80;
+    this.thighDensity = 0.6;
+    this.thighPos = {
+        x: 0.7 * this.bodySize.w / 2,
+        y: 1.3 * this.bodySize.h / 2
+    };
+    this.calfLength = 80;
+    this.calfDensity = 0.3;
 
     /* input flags */
     this.leftArm = this.rightArm = 0;
@@ -57,6 +98,8 @@ girpgame.prototype.initWorld = function(world) {
 
     /* Create the player */
     this.player = {};
+    this.player.left = {};
+    this.player.right = {};
 
     /* start with a torso */
     body = new b2BodyDef();
@@ -68,11 +111,11 @@ girpgame.prototype.initWorld = function(world) {
     body.position.Set(this.bodyCenter.x, this.bodyCenter.y);
     this.player.torso = this.world.CreateBody(body);
 
-    this.player.left = {};
-    this.player.right = {};
-
     this.initArm(this.player.left, -1);
     this.initArm(this.player.right, 1);
+
+    this.initLeg(this.player.left, -1);
+    this.initLeg(this.player.right, 1);
 
     /* hax0r fix left arm to a position */
     var rjd = new b2RevoluteJointDef();
@@ -87,6 +130,28 @@ girpgame.prototype.initWorld = function(world) {
 
 };
 
+girpgame.prototype.tick = function() {
+    if (this.leftArm) {
+        this.reachFor(this.player.left.lowerArm, this.lowerArmLength, this.goal);
+        this.reachFor(this.player.left.upperArm, this.upperArmLength, this.goal);
+    }
+    if (this.rightArm) {
+        this.reachFor(this.player.right.lowerArm, this.lowerArmLength, this.goal2);
+        this.reachFor(this.player.right.upperArm, this.upperArmLength, this.goal2);
+    }
+}
+
+
+/****************
+ * Arm stuff
+ ***************/
+
+
+/**
+ * Create an arm and attach it to the torso.
+ * @param dest an object that will hold the upperArm and lowerArm bodies.
+ * @param dir  -1 or 1 for the left or right arm respectively.
+ */
 girpgame.prototype.initArm = function(dest, dir) {
     var body;
     var shape;
@@ -95,7 +160,6 @@ girpgame.prototype.initArm = function(dest, dir) {
 
     /* make the upper arm */
     body = new b2BodyDef();
-    body.position.Set(50, 50);
     shape = new b2BoxDef();
     shape.extents.Set(this.upperArmLength / 2, 6);
     shape.density = this.upperArmDensity;
@@ -153,17 +217,13 @@ girpgame.prototype.initArm = function(dest, dir) {
 
 };
 
-girpgame.prototype.tick = function() {
-    if (this.leftArm) {
-        this.reachFor(this.player.left.lowerArm, this.lowerArmLength, this.goal);
-        this.reachFor(this.player.left.upperArm, this.upperArmLength, this.goal);
-    }
-    if (this.rightArm) {
-        this.reachFor(this.player.right.lowerArm, this.lowerArmLength, this.goal2);
-        this.reachFor(this.player.right.upperArm, this.upperArmLength, this.goal2);
-    }
-}
-
+/**
+ * Makes the specified arm part reach for the specified goal body.
+ *
+ * @param arm
+ * @param armLength
+ * @param goal
+ */
 girpgame.prototype.reachFor = function(arm, armLength, goal) {
     var forcePos = b2Math.AddVV(arm.m_position, b2Math.b2MulMV(arm.m_R, { y: 0, x: armLength / 2}));
     var goalPosition = goal.m_position.Copy();
@@ -188,26 +248,79 @@ girpgame.prototype.reachFor = function(arm, armLength, goal) {
     arm.ApplyForce(force, forcePos);
 };
 
-girpgame.prototype.bindInput = function(el) {
-    Event.observe(window, 'keydown', function(event) {
-        this.input(event.keyCode, 1);
-    }.bind(this));
-    Event.observe(window, 'keyup', function(event) {
-        this.input(event.keyCode, 0);
-    }.bind(this));
+
+/****************
+ * Leg stuff
+ ***************/
+
+/**
+ * Create a leg and attach it to the torso.
+ * @param dest an object that will hold the arm bodies.
+ * @param dir  -1 or 1 for the left or right leg respectively.
+ */
+
+girpgame.prototype.initLeg = function(dest, dir) {
+    var body;
+    var shape;
+    var rjd;
+    var prevBody;
+
+    /* make the thigh */
+    body = new b2BodyDef();
+    shape = new b2BoxDef();
+    shape.extents.Set(6, this.thighLength / 2);
+    shape.density = this.thighDensity;
+    body.AddShape(shape);
+    body.position.Set(
+        this.bodyCenter.x + dir * this.thighPos.x,
+        this.bodyCenter.y + this.thighPos.y
+    );
+    body.angularDamping = this.armAngularDamping;
+    dest.thigh = this.world.CreateBody(body);
+
+    /* connect it to the body */
+    rjd = new b2RevoluteJointDef();
+    rjd.anchorPoint.Set(
+        body.position.x,
+        body.position.y - shape.extents.y / 2
+    );
+    rjd.body1 = this.player.torso;
+    rjd.body2 = dest.thigh;
+    rjd.enableMotor = false;
+    //rjd.lowerAngle = -0.5 * 3.14159;
+    //rjd.upperAngle = 0.5 * 3.14159;
+    //rjd.enableLimit = true;
+    this.world.CreateJoint(rjd);
+
+    /* keep the ref to the thigh def around so we can use it for position */
+    prevBody = body;
+
+    /* make the calf */
+    body = new b2BodyDef();
+    shape = new b2BoxDef();
+    shape.extents.Set(6, this.calfLength / 2);
+    shape.density = this.calfDensity;
+    body.AddShape(shape);
+    body.position.Set(
+        this.bodyCenter.x + dir * this.thighPos.x,
+        this.bodyCenter.y + this.thighPos.y + this.thighLength
+    );
+//    body.angularDamping = this.calfAngularDamping;
+    dest.calf = this.world.CreateBody(body);
+
+    /* and connect it to the thigh. */
+    rjd = new b2RevoluteJointDef();
+    rjd.anchorPoint.Set(
+        body.position.x,
+        body.position.y - this.thighLength / 2
+    );
+    rjd.body1 = dest.thigh;
+    rjd.body2 = dest.calf;
+    rjd.enableMotor = false;
+//    rjd.lowerAngle = -0.5 * 3.14159;
+//    rjd.upperAngle = 0.5 * 3.14159;
+//    rjd.enableLimit = true;
+    this.world.CreateJoint(rjd);
+
 };
 
-
-girpgame.prototype.input = function(keyCode, down) {
-    switch(keyCode) {
-    case 82:
-        this.leftArm = down;
-        break;
-    case 84:
-        this.rightArm = down;
-        break;
-    default:
-        window.console.log("skipped " + event.keyCode);
-    }
-
-};
