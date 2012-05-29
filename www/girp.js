@@ -16,9 +16,13 @@ girpgame.prototype.initWorld = function(world) {
     /* all sizes used to define the shape of the player. */
     this.bodyCenter = { x: 220, y: 100 };
     this.bodySize = { w: 80, h: 120 };
+    this.bodyAngularDamping = 0.9999;
     this.upperArmLength = 60;
+    this.upperArmDensity = 0.6;
     this.upperArmPos = { x: this.upperArmLength, y: 0.8 * this.bodySize.h / 2 };
     this.lowerArmLength = 80;
+    this.lowerArmDensity = 0.3;
+    this.armAngularDamping = 1;
 
     /* input flags */
     this.leftArm = this.rightArm = 0;
@@ -60,6 +64,7 @@ girpgame.prototype.initWorld = function(world) {
     shape.extents.Set(this.bodySize.w / 2, this.bodySize.h / 2);
     shape.density = 1;
     body.AddShape(shape);
+    body.angularDamping = this.bodyAngularDamping;
     body.position.Set(this.bodyCenter.x, this.bodyCenter.y);
     this.player.torso = this.world.CreateBody(body);
 
@@ -93,12 +98,13 @@ girpgame.prototype.initArm = function(dest, dir) {
     body.position.Set(50, 50);
     shape = new b2BoxDef();
     shape.extents.Set(this.upperArmLength / 2, 6);
-    shape.density = 1;
+    shape.density = this.upperArmDensity;
     body.AddShape(shape);
     body.position.Set(
         this.bodyCenter.x + dir * this.upperArmPos.x,
         this.bodyCenter.y - this.upperArmPos.y
     );
+    body.angularDamping = this.armAngularDamping;
     dest.upperArm = this.world.CreateBody(body);
 
     /* connect it to the body */
@@ -122,12 +128,13 @@ girpgame.prototype.initArm = function(dest, dir) {
     body = new b2BodyDef();
     shape = new b2BoxDef();
     shape.extents.Set(40, 6);
-    shape.density = 1;
+    shape.density = this.lowerArmDensity;
     body.AddShape(shape);
     body.position.Set(
         prevBody.position.x + dir * this.upperArmLength / 2 + dir * this.lowerArmLength / 2,
         prevBody.position.y
     );
+    //body.angularDamping = this.armAngularDamping;
     dest.lowerArm = this.world.CreateBody(body);
 
     /* and connect it to the upper arm. */
@@ -148,21 +155,35 @@ girpgame.prototype.initArm = function(dest, dir) {
 
 girpgame.prototype.tick = function() {
     if (this.leftArm) {
-        this.reachFor(this.player.left.lowerArm, this.goal);
+        this.reachFor(this.player.left.lowerArm, this.lowerArmLength, this.goal);
+        this.reachFor(this.player.left.upperArm, this.upperArmLength, this.goal);
     }
     if (this.rightArm) {
-        this.reachFor(this.player.right.lowerArm, this.goal2);
+        this.reachFor(this.player.right.lowerArm, this.lowerArmLength, this.goal2);
+        this.reachFor(this.player.right.upperArm, this.upperArmLength, this.goal2);
     }
 }
 
-girpgame.prototype.reachFor = function(arm, goal) {
+girpgame.prototype.reachFor = function(arm, armLength, goal) {
+    var forcePos = b2Math.AddVV(arm.m_position, b2Math.b2MulMV(arm.m_R, { y: 0, x: armLength / 2}));
     var goalPosition = goal.m_position.Copy();
     var force = b2Math.SubtractVV(goalPosition, arm.m_position);
     force.Normalize();
-    force.Multiply(5000000);
 
-    var pos = b2Math.AddVV(arm.m_position, b2Math.b2MulMV(arm.m_R, { x: 0, y: this.lowerArmLength / 2}));
-    arm.ApplyForce(force, pos);
+    var armDir = b2Math.b2MulMV(arm.m_R, { y: 0, x: armLength / 2});
+    armDir.Normalize();
+    drawVector(forcePos.x, forcePos.y, forcePos.x + 50 * armDir.x, forcePos.y + 50 * armDir.y, "#ff00ff");
+
+    //var dp = 1 - Math.abs(b2Math.b2Dot(force, armDir));
+    var dp = 1;
+
+    //window.console.log(dp);
+
+    drawVector(forcePos.x, forcePos.y, forcePos.x + dp * 50 * force.x, forcePos.y + dp * 50 * force.y, "#ff");
+
+    force.Multiply(dp * 325000);
+
+    arm.ApplyForce(force, forcePos);
 };
 
 girpgame.prototype.bindInput = function(el) {

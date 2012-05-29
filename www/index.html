@@ -94,6 +94,8 @@
     var canvasWidth = canvas.width;
     var canvasHeight = canvas.height;
 
+    window.setRenderContext(ctx);
+
     function init() {
         var worldAABB = new b2AABB();
         worldAABB.minVertex.Set(-1000, -1000);
@@ -115,7 +117,7 @@
         girp.tick();
         world.Step(timeStep, iteration);
         ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-        drawWorld(world, ctx);
+        window.drawWorld(world);
         if (cnt > 0) {
             setTimeout('step(' + (cnt || 0) + ')', 10);
         }
