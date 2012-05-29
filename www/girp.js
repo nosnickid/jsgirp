@@ -183,6 +183,8 @@ girpgame.prototype.reachFor = function(arm, armLength, goal) {
 
     force.Multiply(dp * 325000);
 
+    arm.WakeUp();
+
     arm.ApplyForce(force, forcePos);
 };
 
