@@ -113,14 +113,14 @@
     }
 
     function draw() {
-        ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+        ctx.clearRect(-canvasWidth, -canvasHeight, 2*canvasWidth, 2*canvasHeight);
         window.drawWorld(world);
     }
 
     function step(cnt) {
         var stepping = false;
         var timeStep = 1.0/60;
-        var iteration = 1;
+        var iteration = 5;
         world.Step(timeStep, iteration);
         girp.tick();
         draw();
@@ -130,13 +130,14 @@
     }
 
     init();
-    step(0);
+    step(1);
 
 </script>
 
 <div style="cursor: pointer;" onclick="init(); step(1)">go</div>
 <div style="cursor: pointer;" onclick="init(); draw()">reset</div>
 
+<input type="checkbox" id="vel" onchange="window.d_velocityVector = this.checked;"><label for="vel">draw velocity vectors</label>
 
 </body>
 </html>
