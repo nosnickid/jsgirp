@@ -68,9 +68,15 @@
             x: this.upperArmLength,
             y: 0.8 * this.bodySize.h / 2
         };
+
         this.lowerArmLength = 80;
         this.lowerArmDensity = 0.3;
         this.armAngularDamping = 1;
+
+        this.elbowMaxTorque = 100000000000;
+        this.elbowMotorSpeed = 15;
+        this.reachForce = 425000;
+
         /* leg setup */
         this.thighLength = 80;
         this.thighWidth = 6;
@@ -83,8 +89,6 @@
         this.calfLength = 80;
         this.calfWidth = 6;
         this.calfDensity = 1;
-
-        this.heaveFactor = 8000000;
 
         /* input flags */
         this.leftArm = this.rightArm = this.heave = 0;
@@ -189,6 +193,8 @@
         rjd.lowerAngle = -0.9 * 3.14159;
         rjd.upperAngle = 0.9 * 3.14159;
         rjd.enableLimit = true;
+        //rjd.motorSpeed = -0.1;
+        rjd.maxMotorTorque = this.elbowMaxTorque;
         dest.shoulder = this.world.CreateJoint(rjd);
 
         /* keep the ref to the upper arm def around so we can use it for position */
@@ -220,8 +226,8 @@
         rjd.Initialize(dest.upperArm, dest.lowerArm, anchor);
         rjd.enableMotor = false;
         rjd.enableLimit = true;
-        rjd.motorSpeed = 5;
-        rjd.maxMotorTorque = 1000000000000;
+        rjd.motorSpeed = -dir * this.elbowMotorSpeed;
+        rjd.maxMotorTorque = this.elbowMaxTorque;
         if (dir < 0) {
             rjd.lowerAngle = 0;
             rjd.upperAngle = 0.5 * 3.14159;
@@ -250,13 +256,14 @@
         armDir.Normalize();
         drawVector(forcePos.x, forcePos.y, forcePos.x + 50 * armDir.x, forcePos.y + 50 * armDir.y, "#ff00ff");
 
-        force.Multiply(325000);
+        force.Multiply(this.reachForce);
 
         arm.ApplyForce(force, forcePos);
     };
 
     girpgame.prototype.doHeave = function(side, heave) {
         side.elbow.m_enableMotor = heave;
+        //side.shoulder.m_enableMotor = heave;
     };
 
 
