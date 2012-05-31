@@ -12,7 +12,13 @@
         b2FixtureDef = Box2D.Dynamics.b2FixtureDef,
         b2PolygonShape = Box2D.Collision.Shapes.b2PolygonShape,
         b2RevoluteJointDef = Box2D.Dynamics.Joints.b2RevoluteJointDef,
-        b2Math = Box2D.Common.Math.b2Math
+        b2WeldJointDef = Box2D.Dynamics.Joints.b2WeldJointDef,
+        b2Math = Box2D.Common.Math.b2Math,
+        b2WorldManifold = Box2D.Collision.b2WorldManifold,
+        CATEGORY_HANDHOLD = 0x1,
+        CATEGORY_PLAYER = 0x2,
+        CATEGORY_STARTING_WELD = 0x4,
+        undefined
         ;
 
     window.girpgame = function() {
@@ -101,6 +107,8 @@
         this.goal = new handhold(this.world, 50, 50);
         this.goal2 = new handhold(this.world, 550, 50);
 
+        new handhold(this.world, 0, 0);
+
          /* Create the player */
         this.player = {};
         this.player.left = {};
@@ -113,7 +121,8 @@
         fixture.shape = new b2PolygonShape();
         fixture.shape.SetAsBox(this.bodySize.w / 2, this.bodySize.h / 2);
         fixture.density = 1;
-        fixture.maskBits = 0;
+        fixture.filter.maskBits = CATEGORY_HANDHOLD;
+        fixture.filter.categoryBits = CATEGORY_PLAYER;
         body.angularDamping = this.bodyAngularDamping;
         body.position.Set(this.bodyCenter.x, this.bodyCenter.y);
         this.player.torso = this.world.CreateBody(body);
@@ -125,33 +134,118 @@
         this.initLeg(this.player.left, -1);
         this.initLeg(this.player.right, 1);
 
-        /* hax0r fix left arm to a position */
-        var rjd = new b2RevoluteJointDef();
-        rjd.Initialize(this.player.left.lowerArm, this.goal.body, new b2Vec2(55,55));
-        this.world.CreateJoint(rjd);
+        /* start the game with the body welded to a fixed spot. */
+        this.startingWeldA = new handhold(this.world, this.bodyCenter.x + 5, this.bodyCenter.y, CATEGORY_STARTING_WELD);
+        this.startingWeldB = new handhold(this.world, this.bodyCenter.x - 5, this.bodyCenter.y, CATEGORY_STARTING_WELD);
 
-        this.leftArmNode = this.goal;
-
+        var rjd = new b2WeldJointDef();
+        rjd.Initialize(this.player.torso, this.startingWeldA.body, this.startingWeldA.body.m_xf.position);
+        this.startingWeldAJoint = this.world.CreateJoint(rjd);
+        rjd.Initialize(this.player.torso, this.startingWeldB.body, this.startingWeldB.body.m_xf.position);
+        this.startingWeldBJoint = this.world.CreateJoint(rjd);
     };
 
+    /**
+     * Look out for contacts to attach hands to, and do the heaving / reaching
+     */
     girpgame.prototype.tick = function() {
-        if (this.leftArm) {
+        var contact;
+        var hold, arm;
+
+        for(contact = this.world.GetContactList(); contact; contact = contact.next) {
+            if (contact.m_fixtureA.m_body == this.goal.body) {
+                hold = contact.m_fixtureA;
+                arm = contact.m_fixtureB.m_body;
+            } else if (contact.m_fixtureB.m_body == this.goal.body) {
+                hold = contact.m_fixtureB;
+                arm = contact.m_fixtureA.m_body;
+            } else {
+                hold = 0;
+            }
+
+            if (hold) {
+                var wm = new b2WorldManifold();
+                // wm.Initialize(contact, contact.m_fixtureA.m_body.m_xf, contact.m_fixtureA.m_shape.radius, contact.m_fixtureB.m_body.m_xf, contact.m_fixtureB.m_shape.radius);
+                wm.Initialize(contact.m_manifold, contact.m_fixtureA.m_body.m_xf, contact.m_fixtureA.m_shape.radius, contact.m_fixtureB.m_body.m_xf, contact.m_fixtureB.m_shape.radius);
+                if (arm == this.player.left.lowerArm && this.leftArm) {
+                    var rjd;
+                    rjd = new b2RevoluteJointDef;
+                    rjd.Initialize(hold.m_body, arm, wm.m_points[0]);
+
+                    this.leftArmNode = hold.m_body;
+                    this.leftArmJoint = this.world.CreateJoint(rjd);
+
+                    this.destroyWelds();
+                } else if (arm == this.player.right.lowerArm) {
+                    this.rightArm = 1;
+                    this.rightArmNode = hold.m_body;
+                }
+            }
+        }
+
+
+        if (this.leftArm && !this.leftArmJoint) {
             this.reachFor(this.player.left.lowerArm, this.lowerArmLength, -1, this.goal);
             this.reachFor(this.player.left.upperArm, this.upperArmLength, -1, this.goal);
+        } else if (!this.leftArm && this.leftArmJoint) {
+            this.world.DestroyJoint(this.leftArmJoint);
+            this.leftArmJoint = this.leftArmNode = undefined;
         }
         if (this.rightArm) {
             this.reachFor(this.player.right.lowerArm, this.lowerArmLength, 1, this.goal2);
             this.reachFor(this.player.right.upperArm, this.upperArmLength, 1, this.goal2);
+        } else {
+            if (this.rightArmJoint) {
+                this.world.DestroyJoint(this.rightArmJoint);
+                this.rightArmJoint = this.rightArmNode = undefined;
+            }
         }
 
         this.doHeave(this.player.left, this.leftArmNode && this.heave);
         this.doHeave(this.player.right, this.rightArmNode && this.heave);
     };
 
+    /**
+     * Makes the specified arm part reach for the specified goal body.
+     *
+     * @param arm
+     * @param armLength
+     * @param goal
+     */
+    girpgame.prototype.reachFor = function(arm, armLength, dir, goal) {
+        var forcePos = b2Math.MulX(arm.m_xf, { y: 0, x: dir * armLength / 2});
+        var goalPosition = goal.body.m_xf.position.Copy();
+        var force = b2Math.SubtractVV(goalPosition, arm.m_xf.position);
+        force.Normalize();
 
-    /****************
-     * Arm stuff
-     ***************/
+        var armDir = b2Math.MulMV(arm.m_xf.R, new b2Vec2(dir * armLength / 2, 0));
+        armDir.Normalize();
+
+        force.Multiply(this.reachForce);
+
+        arm.ApplyForce(force, forcePos);
+    };
+
+    /**
+     * if heave, pull up on the specified side.
+     * @param side
+     * @param heave
+     */
+    girpgame.prototype.doHeave = function(side, heave) {
+        side.elbow.m_enableMotor = heave;
+        //side.shoulder.m_enableMotor = heave;
+    };
+
+    girpgame.prototype.destroyWelds = function() {
+        if (this.startingWeldAJoint) {
+            this.world.DestroyJoint(this.startingWeldAJoint);
+            this.world.DestroyJoint(this.startingWeldBJoint);
+            this.world.DestroyBody(this.startingWeldA.body);
+            this.world.DestroyBody(this.startingWeldB.body);
+
+            this.startingWeldAJoint = this.startingWeldBJoint = this.startingWeldA = this.startingWeldB = undefined;
+        }
+    }
 
 
     /**
@@ -179,7 +273,8 @@
         fixture.shape = new b2PolygonShape();
         fixture.shape.SetAsBox(this.upperArmLength / 2, 6);
         fixture.density = this.upperArmDensity;
-        fixture.maskBits = 0;
+        fixture.filter.maskBits = CATEGORY_HANDHOLD;
+        fixture.filter.categoryBits = CATEGORY_PLAYER;
         dest.upperArm.CreateFixture(fixture);
 
         /* connect it to the body - SHOULDER joint */
@@ -213,7 +308,8 @@
         fixture.shape = new b2PolygonShape();
         fixture.shape.SetAsBox(this.lowerArmLength / 2, 6);
         fixture.density = this.lowerArmDensity;
-        fixture.maskBits = 0;
+        fixture.filter.maskBits = CATEGORY_HANDHOLD;
+        fixture.filter.categoryBits = CATEGORY_PLAYER;
         //body.angularDamping = this.armAngularDamping;
         dest.lowerArm.CreateFixture(fixture);
 
@@ -238,38 +334,6 @@
         rjd.enableLimit = true;
         dest.elbow = this.world.CreateJoint(rjd);
     };
-
-    /**
-     * Makes the specified arm part reach for the specified goal body.
-     *
-     * @param arm
-     * @param armLength
-     * @param goal
-     */
-    girpgame.prototype.reachFor = function(arm, armLength, dir, goal) {
-        var forcePos = b2Math.MulX(arm.m_xf, { y: 0, x: dir * armLength / 2});
-        var goalPosition = goal.body.m_xf.position.Copy();
-        var force = b2Math.SubtractVV(goalPosition, arm.m_xf.position);
-        force.Normalize();
-
-        var armDir = b2Math.MulMV(arm.m_xf.R, new b2Vec2(dir * armLength / 2, 0));
-        armDir.Normalize();
-        drawVector(forcePos.x, forcePos.y, forcePos.x + 50 * armDir.x, forcePos.y + 50 * armDir.y, "#ff00ff");
-
-        force.Multiply(this.reachForce);
-
-        arm.ApplyForce(force, forcePos);
-    };
-
-    girpgame.prototype.doHeave = function(side, heave) {
-        side.elbow.m_enableMotor = heave;
-        //side.shoulder.m_enableMotor = heave;
-    };
-
-
-    /****************
-     * Leg stuff
-     ***************/
 
     /**
      * Create a leg and attach it to the torso.
@@ -297,7 +361,8 @@
         fixture.shape = new b2PolygonShape();
         fixture.shape.SetAsBox(this.thighWidth, this.thighLength / 2);
         fixture.density = this.thighDensity;
-        fixture.maskBits = 0;
+        fixture.filter.maskBits = CATEGORY_HANDHOLD;
+        fixture.filter.categoryBits = CATEGORY_PLAYER;
         dest.thigh.CreateFixture(fixture);
 
 
@@ -329,7 +394,8 @@
         fixture.shape = new b2PolygonShape();
         fixture.shape.SetAsBox(this.calfWidth, this.calfLength / 2);
         fixture.density = this.calfDensity;
-        fixture.maskBits = 0;
+        fixture.filter.maskBits = CATEGORY_HANDHOLD;
+        fixture.filter.categoryBits = CATEGORY_PLAYER;
         dest.calf.CreateFixture(fixture);
 
         /* and connect it to the thigh. - KNEE JOINT */
@@ -353,7 +419,6 @@
     };
 
 
-
     /**
      * Encapsulate a hand hold. Doesn't actually do much and should probably just be a function
      * in girpgame. Ahem.
@@ -362,9 +427,11 @@
      * @param x      xpos
      * @param y      ypos
      */
-    var handhold = function(world, x, y) {
+    var handhold = function(world, x, y, category_bits) {
         var body;
         var fixture;
+
+        if (category_bits == undefined) category_bits = CATEGORY_HANDHOLD;
 
         this.world = world;
 
@@ -374,6 +441,8 @@
         fixture = new b2FixtureDef();
         fixture.shape = new b2PolygonShape();
         fixture.shape.SetAsBox(10, 10);
+        fixture.filter.categoryBits = category_bits;
+        fixture.filter.isSensor = true;
         body.position.Set(x, y);
         this.body = this.world.CreateBody(body);
         this.body.CreateFixture(fixture);

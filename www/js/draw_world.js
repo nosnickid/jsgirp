@@ -10,7 +10,7 @@
 
     window.setRenderContext = function(ctx) {
         context = ctx;
-        ctx.translate(150, 0);
+        ctx.translate(150, 150);
     };
 
     window.drawWorld = function(world) {
@@ -24,7 +24,7 @@
             }
         }
 
-        $.each(function(item) {
+        $.each(vectors, function(idx, item) {
             context.strokeStyle = item.col;
             context.beginPath();
             context.moveTo(item.x1, item.y1);
@@ -137,7 +137,8 @@
     }
 
     window.drawVector = function(x1, y1, x2, y2, col) {
-        if (!col) col = "#4400ff";
+        var undef;
+        if (undef == col) col = "#4400ff";
         vectors.push({x1: x1, x2: x2, y1: y1, y2: y2, col: col});
     }
 })(jQuery);
