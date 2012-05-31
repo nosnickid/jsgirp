@@ -1,5 +1,8 @@
-(function() {
+(function($) {
     var context;
+
+    var b2Shape = Box2D.Collision.Shapes.b2Shape;
+    var b2Math = Box2D.Common.Math.b2Math;
 
     window.d_velocityVector = 0;
 
@@ -12,15 +15,16 @@
 
     window.drawWorld = function(world) {
         for (var j = world.m_jointList; j; j = j.m_next) {
-            drawJoint(j, context);
+            //drawJoint(j, context);
         }
         for (var b = world.m_bodyList; b; b = b.m_next) {
-            for (var s = b.GetShapeList(); s != null; s = s.GetNext()) {
-                drawShape(s, context);
+            for (var f = b.GetFixtureList(); f; f = f.m_next) {
+                s = f.GetShape();
+                drawShape(b, s);
             }
         }
 
-        vectors.each(function(item) {
+        $.each(function(item) {
             context.strokeStyle = item.col;
             context.beginPath();
             context.moveTo(item.x1, item.y1);
@@ -69,63 +73,71 @@
         }
         context.stroke();
     }
-    function drawShape(shape) {
+    function drawShape(body, shape) {
+        var tV;
+        var i, d, v;
+
         context.strokeStyle = '#ffffff';
         context.beginPath();
         switch (shape.m_type) {
         case b2Shape.e_circleShape:
-            {
-                var circle = shape;
-                var pos = circle.m_position;
-                var r = circle.m_radius;
-                var segments = 16.0;
-                var theta = 0.0;
-                var dtheta = 2.0 * Math.PI / segments;
-                // draw circle
-                context.moveTo(pos.x + r, pos.y);
-                for (var i = 0; i < segments; i++) {
-                    var d = new b2Vec2(r * Math.cos(theta), r * Math.sin(theta));
-                    var v = b2Math.AddVV(pos, d);
-                    context.lineTo(v.x, v.y);
-                    theta += dtheta;
-                }
-                context.lineTo(pos.x + r, pos.y);
+            var circle = shape;
+            var pos = circle.m_position;
+            var r = circle.m_radius;
+            var segments = 16.0;
+            var theta = 0.0;
+            var dtheta = 2.0 * Math.PI / segments;
+            // draw circle
+            context.moveTo(pos.x + r, pos.y);
+            for (i = 0; i < segments; i++) {
+                d = new b2Vec2(r * Math.cos(theta), r * Math.sin(theta));
+                v = b2Math.AddVV(pos, d);
+                context.lineTo(v.x, v.y);
+                theta += dtheta;
+            }
+            context.lineTo(pos.x + r, pos.y);
 
-                // draw radius
-                context.moveTo(pos.x, pos.y);
-                var ax = circle.m_R.col1;
-                var pos2 = new b2Vec2(pos.x + r * ax.x, pos.y + r * ax.y);
-                context.lineTo(pos2.x, pos2.y);
-            }
+            // draw radius
+            context.moveTo(pos.x, pos.y);
+            var ax = circle.m_R.col1;
+            var pos2 = new b2Vec2(pos.x + r * ax.x, pos.y + r * ax.y);
+            context.lineTo(pos2.x, pos2.y);
             break;
-        case b2Shape.e_polyShape:
-            {
-                var poly = shape;
-                var tV = b2Math.AddVV(poly.m_position, b2Math.b2MulMV(poly.m_R, poly.m_vertices[0]));
-                context.moveTo(tV.x, tV.y);
-                for (var i = 0; i < poly.m_vertexCount; i++) {
-                    var v = b2Math.AddVV(poly.m_position, b2Math.b2MulMV(poly.m_R, poly.m_vertices[i]));
-                    context.lineTo(v.x, v.y);
-                }
-                context.lineTo(tV.x, tV.y);
+        case b2Shape.e_polygonShape:
+            var localVertices = shape.GetVertices();
+            tV = b2Math.MulX(body.m_xf, localVertices[0]);
+            context.moveTo(tV.x, tV.y);
+            for (i = 0; i < localVertices.length; i++) {
+                v = b2Math.MulX(body.m_xf, localVertices[i]);
+                context.lineTo(v.x, v.y);
             }
+            context.lineTo(tV.x, tV.y);
             break;
         }
         context.stroke();
 
-        /* draw velocity vector */
+        /* draw force and velocity vectors */
         if (d_velocityVector) {
-            var tV = b2Math.AddVV(shape.m_position, b2Math.MulFV(0.5, shape.m_body.m_linearVelocity));
+            tV = b2Math.AddVV(body.m_xf.position, b2Math.MulFV(0.5, body.m_linearVelocity));
             context.strokeStyle = "#dd2222";
             context.beginPath();
-            context.moveTo(shape.m_position.x, shape.m_position.y);
+            context.moveTo(body.m_xf.position.x, body.m_xf.position.y);
+            context.lineTo(tV.x, tV.y);
+            context.stroke();
+
+            tV = b2Math.AddVV(body.m_xf.position, b2Math.MulFV(0.005, body.m_force));
+            context.strokeStyle = "#22dd22";
+            context.beginPath();
+            context.moveTo(body.m_xf.position.x, body.m_xf.position.y);
             context.lineTo(tV.x, tV.y);
             context.stroke();
         }
+
+
     }
 
     window.drawVector = function(x1, y1, x2, y2, col) {
         if (!col) col = "#4400ff";
         vectors.push({x1: x1, x2: x2, y1: y1, y2: y2, col: col});
     }
-})();
+})(jQuery);

@@ -4,7 +4,17 @@
  * Released under the terms of the GNU GPL version 3
  */
 
-(function() {
+(function($) {
+
+    var b2Vec2 = Box2D.Common.Math.b2Vec2,
+        b2BodyDef = Box2D.Dynamics.b2BodyDef,
+        b2Body = Box2D.Dynamics.b2Body,
+        b2FixtureDef = Box2D.Dynamics.b2FixtureDef,
+        b2PolygonShape = Box2D.Collision.Shapes.b2PolygonShape,
+        b2RevoluteJointDef = Box2D.Dynamics.Joints.b2RevoluteJointDef,
+        b2Math = Box2D.Common.Math.b2Math
+        ;
+
     window.girpgame = function() {
         return this;
     };
@@ -14,12 +24,13 @@
      * @param el
      */
     girpgame.prototype.bindInput = function(el) {
-        Event.observe(window, 'keydown', function(event) {
-            this.input(event.keyCode, 1);
-        }.bind(this));
-        Event.observe(window, 'keyup', function(event) {
-            this.input(event.keyCode, 0);
-        }.bind(this));
+        var that = this;
+        $(window).bind('keydown', function(event) {
+            that.input(event.keyCode, 1);
+        });
+        $(window).bind('keyup', function(event) {
+            that.input(event.keyCode, 0);
+        });
     };
 
 
@@ -42,7 +53,7 @@
     };
 
     girpgame.prototype.initWorld = function(world) {
-        var shape;
+        var fixture;
         var body;
         var prevBody;
 
@@ -64,6 +75,7 @@
         this.thighLength = 80;
         this.thighWidth = 6;
         this.thighDensity = 0.6;
+        this.thighAngularDamping = 1;
         this.thighPos = {
             x: 0.7 * this.bodySize.w / 2,
             y: 1.4 * this.bodySize.h / 2
@@ -82,47 +94,26 @@
 
         this.world = world;
 
-        /* Create a floor */
-        body = new b2BodyDef();
-        shape = new b2BoxDef();
-        shape.extents.Set(1000, 5);
-        shape.restitution = 0.7;
-        body.AddShape(shape);
-        body.position.Set(0, 600);
-        this.world.CreateBody(body);
+        this.goal = new handhold(this.world, 50, 50);
+        this.goal2 = new handhold(this.world, 550, 50);
 
-        /* create a little target too */
-        body = new b2BodyDef();
-        shape = new b2BoxDef();
-        shape.extents.Set(10, 10);
-        body.AddShape(shape);
-        body.position.Set(50, 50);
-        this.goal = this.world.CreateBody(body);
-
-        /* create another little target too */
-        body = new b2BodyDef();
-        shape = new b2BoxDef();
-        shape.extents.Set(10, 10);
-        body.AddShape(shape);
-        body.position.Set(550, 50);
-        this.goal2 = this.world.CreateBody(body);
-
-
-        /* Create the player */
+         /* Create the player */
         this.player = {};
         this.player.left = {};
         this.player.right = {};
 
         /* start with a torso */
         body = new b2BodyDef();
-        shape = new b2BoxDef();
-        shape.extents.Set(this.bodySize.w / 2, this.bodySize.h / 2);
-        shape.density = 1;
-        shape.maskBits = 0;
-        body.AddShape(shape);
+        body.type = b2Body.b2_dynamicBody;
+        fixture = new b2FixtureDef();
+        fixture.shape = new b2PolygonShape();
+        fixture.shape.SetAsBox(this.bodySize.w / 2, this.bodySize.h / 2);
+        fixture.density = 1;
+        fixture.maskBits = 0;
         body.angularDamping = this.bodyAngularDamping;
         body.position.Set(this.bodyCenter.x, this.bodyCenter.y);
         this.player.torso = this.world.CreateBody(body);
+        this.player.torso.CreateFixture(fixture);
 
         this.initArm(this.player.left, -1);
         this.initArm(this.player.right, 1);
@@ -132,13 +123,7 @@
 
         /* hax0r fix left arm to a position */
         var rjd = new b2RevoluteJointDef();
-        rjd.anchorPoint.Set(55, 55);
-        rjd.body1 = this.player.left.lowerArm;
-        rjd.body2 = this.goal;
-        rjd.enableMotor = false;
-        rjd.lowerAngle = -0.5 * 3.14159;
-        rjd.upperAngle = 0.5 * 3.14159;
-        rjd.enableLimit = true;
+        rjd.Initialize(this.player.left.lowerArm, this.goal.body, new b2Vec2(55,55));
         this.world.CreateJoint(rjd);
 
         this.leftArmNode = this.goal;
@@ -172,32 +157,34 @@
      */
     girpgame.prototype.initArm = function(dest, dir) {
         var body;
-        var shape;
+        var fixture;
         var rjd;
+        var anchor;
         var prevBody;
 
         /* make the upper arm */
         body = new b2BodyDef();
-        shape = new b2BoxDef();
-        shape.extents.Set(this.upperArmLength / 2, 6);
-        shape.density = this.upperArmDensity;
-        shape.maskBits = 0;
-        body.AddShape(shape);
+        body.type = b2Body.b2_dynamicBody;
         body.position.Set(
             this.bodyCenter.x + dir * this.upperArmPos.x,
             this.bodyCenter.y - this.upperArmPos.y
         );
         body.angularDamping = this.armAngularDamping;
         dest.upperArm = this.world.CreateBody(body);
+        fixture = new b2FixtureDef();
+        fixture.shape = new b2PolygonShape();
+        fixture.shape.SetAsBox(this.upperArmLength / 2, 6);
+        fixture.density = this.upperArmDensity;
+        fixture.maskBits = 0;
+        dest.upperArm.CreateFixture(fixture);
 
         /* connect it to the body - SHOULDER joint */
         rjd = new b2RevoluteJointDef();
-        rjd.anchorPoint.Set(
+        anchor = new b2Vec2(
             this.bodyCenter.x + dir * this.upperArmPos.x - dir * this.upperArmLength / 2 * 0.9,
             this.bodyCenter.y - this.upperArmPos.y
         );
-        rjd.body1 = this.player.torso;
-        rjd.body2 = dest.upperArm;
+        rjd.Initialize(this.player.torso, dest.upperArm, anchor);
         rjd.enableMotor = false;
         rjd.lowerAngle = -0.9 * 3.14159;
         rjd.upperAngle = 0.9 * 3.14159;
@@ -209,29 +196,32 @@
 
         /* make the lower arm */
         body = new b2BodyDef();
-        shape = new b2BoxDef();
-        shape.extents.Set(40, 6);
-        shape.density = this.lowerArmDensity;
-        shape.maskBits = 0;
-        body.AddShape(shape);
+        body.type = b2Body.b2_dynamicBody;
         body.position.Set(
             prevBody.position.x + dir * this.upperArmLength / 2 + dir * this.lowerArmLength / 2,
             prevBody.position.y
         );
-        //body.angularDamping = this.armAngularDamping;
         dest.lowerArm = this.world.CreateBody(body);
+
+        fixture = new b2FixtureDef();
+        fixture.shape = new b2PolygonShape();
+        fixture.shape.SetAsBox(this.lowerArmLength / 2, 6);
+        fixture.density = this.lowerArmDensity;
+        fixture.maskBits = 0;
+        //body.angularDamping = this.armAngularDamping;
+        dest.lowerArm.CreateFixture(fixture);
 
         /* and connect it to the upper arm. - ELBOW joint */
         rjd = new b2RevoluteJointDef();
-        rjd.anchorPoint.Set(
+        anchor = new b2Vec2(
             body.position.x - dir * this.lowerArmLength / 2,
             body.position.y
         );
-        rjd.body1 = dest.upperArm;
-        rjd.body2 = dest.lowerArm;
-        rjd.enableMotor = true;
+        rjd.Initialize(dest.upperArm, dest.lowerArm, anchor);
+        rjd.enableMotor = false;
+        rjd.enableLimit = true;
         rjd.motorSpeed = 5;
-        rjd.motorTorque = 1000000000000;
+        rjd.maxMotorTorque = 1000000000000;
         if (dir < 0) {
             rjd.lowerAngle = 0;
             rjd.upperAngle = 0.5 * 3.14159;
@@ -241,7 +231,6 @@
         }
         rjd.enableLimit = true;
         dest.elbow = this.world.CreateJoint(rjd);
-
     };
 
     /**
@@ -252,28 +241,16 @@
      * @param goal
      */
     girpgame.prototype.reachFor = function(arm, armLength, dir, goal) {
-        var forcePos = b2Math.AddVV(
-            arm.m_position,
-            b2Math.b2MulMV(arm.m_R, { y: 0, x: dir * armLength / 2})
-        );
-        var goalPosition = goal.m_position.Copy();
-        var force = b2Math.SubtractVV(goalPosition, arm.m_position);
+        var forcePos = b2Math.MulX(arm.m_xf, { y: 0, x: dir * armLength / 2});
+        var goalPosition = goal.body.m_xf.position.Copy();
+        var force = b2Math.SubtractVV(goalPosition, arm.m_xf.position);
         force.Normalize();
 
-        var armDir = b2Math.b2MulMV(arm.m_R, { y: 0, x: dir * armLength / 2});
+        var armDir = b2Math.MulMV(arm.m_xf.R, new b2Vec2(dir * armLength / 2, 0));
         armDir.Normalize();
         drawVector(forcePos.x, forcePos.y, forcePos.x + 50 * armDir.x, forcePos.y + 50 * armDir.y, "#ff00ff");
 
-        //var dp = 1 - Math.abs(b2Math.b2Dot(force, armDir));
-        var dp = 1;
-
-        //window.console.log(dp);
-
-        drawVector(forcePos.x, forcePos.y, forcePos.x + dp * 50 * force.x, forcePos.y + dp * 50 * force.y, "#ff");
-
-        force.Multiply(dp * 325000);
-
-        arm.WakeUp();
+        force.Multiply(325000);
 
         arm.ApplyForce(force, forcePos);
     };
@@ -295,32 +272,35 @@
 
     girpgame.prototype.initLeg = function(dest, dir) {
         var body;
-        var shape;
+        var fixture;
         var rjd;
         var prevBody;
+        var anchor;
 
         /* make the thigh */
         body = new b2BodyDef();
-        shape = new b2BoxDef();
-        shape.extents.Set(this.thighWidth, this.thighLength / 2);
-        shape.density = this.thighDensity;
-        shape.maskBits = 0;
-        body.AddShape(shape);
+        body.type = b2Body.b2_dynamicBody;
         body.position.Set(
             this.bodyCenter.x + dir * this.thighPos.x,
             this.bodyCenter.y + this.thighPos.y
         );
-        body.angularDamping = this.armAngularDamping;
+        body.angularDamping = this.thighAngularDamping;
         dest.thigh = this.world.CreateBody(body);
+        fixture = new b2FixtureDef();
+        fixture.shape = new b2PolygonShape();
+        fixture.shape.SetAsBox(this.thighWidth, this.thighLength / 2);
+        fixture.density = this.thighDensity;
+        fixture.maskBits = 0;
+        dest.thigh.CreateFixture(fixture);
+
 
         /* connect it to the body - HIP JOINT */
         rjd = new b2RevoluteJointDef();
-        rjd.anchorPoint.Set(
+        anchor = new b2Vec2(
             body.position.x,
-            body.position.y - shape.extents.y / 2
+            body.position.y - this.thighLength / 2
         );
-        rjd.body1 = this.player.torso;
-        rjd.body2 = dest.thigh;
+        rjd.Initialize(this.player.torso, dest.thigh, anchor);
         rjd.enableMotor = false;
         //rjd.lowerAngle = -0.5 * 3.14159;
         //rjd.upperAngle = 0.5 * 3.14159;
@@ -332,26 +312,26 @@
 
         /* make the calf */
         body = new b2BodyDef();
-        shape = new b2BoxDef();
-        shape.extents.Set(this.calfWidth, this.calfLength / 2);
-        shape.density = this.calfDensity;
-        shape.maskBits = 0;
-        body.AddShape(shape);
+        body.type = b2Body.b2_dynamicBody;
         body.position.Set(
             this.bodyCenter.x + dir * this.thighPos.x,
             this.bodyCenter.y + this.thighPos.y + this.thighLength
         );
-    //    body.angularDamping = this.calfAngularDamping;
         dest.calf = this.world.CreateBody(body);
+        fixture = new b2FixtureDef();
+        fixture.shape = new b2PolygonShape();
+        fixture.shape.SetAsBox(this.calfWidth, this.calfLength / 2);
+        fixture.density = this.calfDensity;
+        fixture.maskBits = 0;
+        dest.calf.CreateFixture(fixture);
 
         /* and connect it to the thigh. - KNEE JOINT */
         rjd = new b2RevoluteJointDef();
-        rjd.anchorPoint.Set(
+        anchor = new b2Vec2(
             body.position.x,
             body.position.y - this.thighLength / 2
         );
-        rjd.body1 = dest.thigh;
-        rjd.body2 = dest.calf;
+        rjd.Initialize(dest.thigh, dest.calf, anchor);
         rjd.enableMotor = false;
         if (dir < 0) {
             rjd.lowerAngle = -0.5 * 3.14159;
@@ -364,5 +344,34 @@
         dest.knee = this.world.CreateJoint(rjd);
 
     };
-})();
+
+
+
+    /**
+     * Encapsulate a hand hold. Doesn't actually do much and should probably just be a function
+     * in girpgame. Ahem.
+     *
+     * @param world  box2d physics world
+     * @param x      xpos
+     * @param y      ypos
+     */
+    var handhold = function(world, x, y) {
+        var body;
+        var fixture;
+
+        this.world = world;
+
+        /* create a little target too */
+        body = new b2BodyDef();
+        body.type = b2Body.b2_staticBody;
+        fixture = new b2FixtureDef();
+        fixture.shape = new b2PolygonShape();
+        fixture.shape.SetAsBox(10, 10);
+        body.position.Set(x, y);
+        this.body = this.world.CreateBody(body);
+        this.body.CreateFixture(fixture);
+    };
+
+
+})(jQuery);
 
