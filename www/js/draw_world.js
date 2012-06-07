@@ -1,8 +1,11 @@
 (function($) {
     var context;
 
-    var b2Shape = Box2D.Collision.Shapes.b2Shape;
     var b2Math = Box2D.Common.Math.b2Math;
+    var b2Vec2 = Box2D.Common.Math.b2Vec2;
+    var b2Shape = Box2D.Collision.Shapes.b2Shape;
+    var b2Joint = Box2D.Dynamics.Joints.b2Joint;
+    var b2World = Box2D.Dynamics.b2World;
 
     window.d_velocityVector = 0;
 
@@ -15,7 +18,7 @@
 
     window.drawWorld = function(world) {
         for (var j = world.m_jointList; j; j = j.m_next) {
-            //drawJoint(j, context);
+            drawJoint(j);
         }
         for (var b = world.m_bodyList; b; b = b.m_next) {
             for (var f = b.GetFixtureList(); f; f = f.m_next) {
@@ -35,55 +38,53 @@
         vectors = [];
     };
 
+    function DrawSegment(p1, p2, color) {
+        window.drawVector(p1.x, p1.y, p2.x, p2.y, color);
+    }
+
     function drawJoint(joint) {
-        var b1 = joint.m_body1;
-        var b2 = joint.m_body2;
-        var x1 = b1.m_position;
-        var x2 = b2.m_position;
-        var p1 = joint.GetAnchor1();
-        var p2 = joint.GetAnchor2();
-        context.strokeStyle = '#00eeee';
-        context.beginPath();
+        var b1 = joint.GetBodyA();
+        var b2 = joint.GetBodyB();
+        var xf1 = b1.m_xf;
+        var xf2 = b2.m_xf;
+        var x1 = xf1.position;
+        var x2 = xf2.position;
+        var p1 = joint.GetAnchorA();
+        var p2 = joint.GetAnchorB();
+
+        var color = "#00eeee";
         switch (joint.m_type) {
         case b2Joint.e_distanceJoint:
-            context.moveTo(p1.x, p1.y);
-            context.lineTo(p2.x, p2.y);
+            DrawSegment(p1, p2, color);
             break;
-
         case b2Joint.e_pulleyJoint:
-            // TODO
+            var pulley = ((joint instanceof b2PulleyJoint ? joint : null));
+            var s1 = pulley.GetGroundAnchorA();
+            var s2 = pulley.GetGroundAnchorB();
+            DrawSegment(s1, p1, color);
+            DrawSegment(s2, p2, color);
+            DrawSegment(s1, s2, color);
             break;
-
+        case b2Joint.e_mouseJoint:
+            DrawSegment(p1, p2, color);
+            break;
         default:
-            if (b1 == world.m_groundBody) {
-                context.moveTo(p1.x, p1.y);
-                context.lineTo(x2.x, x2.y);
-            }
-            else if (b2 == world.m_groundBody) {
-                context.moveTo(p1.x, p1.y);
-                context.lineTo(x1.x, x1.y);
-            }
-            else {
-                context.moveTo(x1.x, x1.y);
-                context.lineTo(p1.x, p1.y);
-                context.lineTo(x2.x, x2.y);
-                context.lineTo(p2.x, p2.y);
-            }
-            break;
+            if (b1 != this.m_groundBody) DrawSegment(x1, p1, color);
+            DrawSegment(p1, p2, color);
+            if (b2 != this.m_groundBody) DrawSegment(x2, p2, color);
         }
-        context.stroke();
     }
     function drawShape(body, shape) {
         var tV;
         var i, d, v;
 
         context.strokeStyle = '#ffffff';
+        if (body.m_color) context.strokeStyle = body.m_color;
         context.beginPath();
         switch (shape.m_type) {
         case b2Shape.e_circleShape:
-            var circle = shape;
-            var pos = circle.m_position;
-            var r = circle.m_radius;
+            var pos = body.m_xf.position;
+            var r = shape.m_radius;
             var segments = 16.0;
             var theta = 0.0;
             var dtheta = 2.0 * Math.PI / segments;
@@ -99,7 +100,7 @@
 
             // draw radius
             context.moveTo(pos.x, pos.y);
-            var ax = circle.m_R.col1;
+            var ax = body.m_xf.R.col1;
             var pos2 = new b2Vec2(pos.x + r * ax.x, pos.y + r * ax.y);
             context.lineTo(pos2.x, pos2.y);
             break;
