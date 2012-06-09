@@ -23,7 +23,7 @@
         undefined
         ;
 
-    window.girpgame = function() {
+    window.GirpGame = function() {
         return this;
     };
 
@@ -31,7 +31,7 @@
      * Initialisation function to set up input listeners.
      * @param el
      */
-    girpgame.prototype.bindInput = function(el) {
+    GirpGame.prototype.bindInput = function(el) {
         var that = this;
         $(window).bind('keydown', function(event) {
             that.onInput(event.keyCode, 1);
@@ -42,7 +42,7 @@
     };
 
 
-    girpgame.prototype.onInput = function(keyCode, down) {
+    GirpGame.prototype.onInput = function(keyCode, down) {
         switch(keyCode) {
             case 82:
                 this.input.leftArm = down;
@@ -60,7 +60,7 @@
 
     };
 
-    girpgame.prototype.initWorld = function(world) {
+    GirpGame.prototype.initWorld = function(world) {
         var fixture;
         var body;
         var prevBody;
@@ -155,7 +155,7 @@
         this.startingWeldBJoint = this.world.CreateJoint(rjd);
     };
 
-    girpgame.prototype.onBeginContact = function(contact, manifold) {
+    GirpGame.prototype.onBeginContact = function(contact, manifold) {
         var hold, arm;
 
         if (contact.m_manifold == undefined) return;
@@ -187,7 +187,7 @@
     /**
      * Look out for contacts to attach hands to, and do the heaving / reaching
      */
-    girpgame.prototype.tick = function() {
+    GirpGame.prototype.tick = function() {
 
         this.tickArm(this.input.leftArm, this.player.left, this.goal);
         this.tickArm(this.input.rightArm, this.player.right, this.goal2);
@@ -204,7 +204,7 @@
      * @param side  this.player.left or .right, all the relevant box2d objects.
      * @param goal  the goal that the player should reach for with this arm.
      */
-    girpgame.prototype.tickArm = function(input, side, goal) {
+    GirpGame.prototype.tickArm = function(input, side, goal) {
         if (input && side.armNode && !side.armJoint) {
             // last tick they hit something, so connect them up!
             var rjd;
@@ -233,7 +233,7 @@
      * @param armLength
      * @param goal
      */
-    girpgame.prototype.reachFor = function(arm, armLength, dir, goal) {
+    GirpGame.prototype.reachFor = function(arm, armLength, dir, goal) {
         var forcePos = b2Math.MulX(arm.m_xf, { y: 0, x: dir * armLength / 2});
         var goalPosition = goal.body.m_xf.position.Copy();
         var force = b2Math.SubtractVV(goalPosition, arm.m_xf.position);
@@ -252,12 +252,12 @@
      * @param side
      * @param heave
      */
-    girpgame.prototype.doHeave = function(side, heave) {
+    GirpGame.prototype.doHeave = function(side, heave) {
         side.elbow.m_enableMotor = heave;
         //side.shoulder.m_enableMotor = heave;
     };
 
-    girpgame.prototype.destroyWelds = function() {
+    GirpGame.prototype.destroyWelds = function() {
         if (this.startingWeldAJoint) {
             this.world.DestroyJoint(this.startingWeldAJoint);
             this.world.DestroyJoint(this.startingWeldBJoint);
@@ -274,7 +274,7 @@
      * @param dest an object that will hold the upperArm and lowerArm bodies.
      * @param dir  -1 or 1 for the left or right arm respectively.
      */
-    girpgame.prototype.initArm = function(dest, dir) {
+    GirpGame.prototype.initArm = function(dest, dir) {
         var body;
         var fixture;
         var rjd;
@@ -362,7 +362,7 @@
      * @param dir  -1 or 1 for the left or right leg respectively.
      */
 
-    girpgame.prototype.initLeg = function(dest, dir) {
+    GirpGame.prototype.initLeg = function(dest, dir) {
         var body;
         var fixture;
         var rjd;
@@ -442,7 +442,7 @@
 
     /**
      * Encapsulate a hand hold. Doesn't actually do much and should probably just be a function
-     * in girpgame. Ahem.
+     * in GirpGame. Ahem.
      *
      * @param world  box2d physics world
      * @param x      xpos
