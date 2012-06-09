@@ -17,14 +17,34 @@
     };
 
     window.drawWorld = function(world) {
+        var tV;
+
         for (var j = world.m_jointList; j; j = j.m_next) {
             drawJoint(j);
         }
-        for (var b = world.m_bodyList; b; b = b.m_next) {
-            for (var f = b.GetFixtureList(); f; f = f.m_next) {
-                s = f.GetShape();
-                drawShape(b, s);
+        for (var body = world.m_bodyList; body; body = body.m_next) {
+            for (var f = body.GetFixtureList(); f; f = f.m_next) {
+                var s = f.GetShape();
+                drawShape(body, s);
             }
+
+            /* draw force and velocity vectors */
+            if (d_velocityVector) {
+                tV = b2Math.AddVV(body.m_xf.position, b2Math.MulFV(0.5, body.m_linearVelocity));
+                context.strokeStyle = "#dd2222";
+                context.beginPath();
+                context.moveTo(body.m_xf.position.x, body.m_xf.position.y);
+                context.lineTo(tV.x, tV.y);
+                context.stroke();
+
+                tV = b2Math.AddVV(body.m_xf.position, b2Math.MulFV(0.005, body.m_force));
+                context.strokeStyle = "#22dd22";
+                context.beginPath();
+                context.moveTo(body.m_xf.position.x, body.m_xf.position.y);
+                context.lineTo(tV.x, tV.y);
+                context.stroke();
+            }
+
         }
 
         $.each(vectors, function(idx, item) {
@@ -68,10 +88,15 @@
         case b2Joint.e_mouseJoint:
             DrawSegment(p1, p2, color);
             break;
+        case b2Joint.e_weldJoint:
+            DrawSegment(x1, p1, "#004411");
+            DrawSegment(p1, p2, "#004411");
+            DrawSegment(x2, p2, "#004411");
+            break;
         default:
-            if (b1 != this.m_groundBody) DrawSegment(x1, p1, color);
+            DrawSegment(x1, p1, color);
             DrawSegment(p1, p2, color);
-            if (b2 != this.m_groundBody) DrawSegment(x2, p2, color);
+            DrawSegment(x2, p2, color);
         }
     }
     function drawShape(body, shape) {
@@ -83,12 +108,14 @@
         context.beginPath();
         switch (shape.m_type) {
         case b2Shape.e_circleShape:
-            var pos = body.m_xf.position;
+            var pos = body.m_xf.position.Copy();
             var r = shape.m_radius;
             var segments = 16.0;
             var theta = 0.0;
             var dtheta = 2.0 * Math.PI / segments;
             // draw circle
+            pos.Add(b2Math.MulMV(body.m_xf.R, shape.GetLocalPosition()));
+
             context.moveTo(pos.x + r, pos.y);
             for (i = 0; i < segments; i++) {
                 d = new b2Vec2(r * Math.cos(theta), r * Math.sin(theta));
@@ -116,24 +143,6 @@
             break;
         }
         context.stroke();
-
-        /* draw force and velocity vectors */
-        if (d_velocityVector) {
-            tV = b2Math.AddVV(body.m_xf.position, b2Math.MulFV(0.5, body.m_linearVelocity));
-            context.strokeStyle = "#dd2222";
-            context.beginPath();
-            context.moveTo(body.m_xf.position.x, body.m_xf.position.y);
-            context.lineTo(tV.x, tV.y);
-            context.stroke();
-
-            tV = b2Math.AddVV(body.m_xf.position, b2Math.MulFV(0.005, body.m_force));
-            context.strokeStyle = "#22dd22";
-            context.beginPath();
-            context.moveTo(body.m_xf.position.x, body.m_xf.position.y);
-            context.lineTo(tV.x, tV.y);
-            context.stroke();
-        }
-
 
     }
 
