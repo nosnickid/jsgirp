@@ -281,6 +281,7 @@
         var anchor;
         var prevBody;
 
+        //<editor-fold desc="Upper arm and shoulder">
         /* make the upper arm */
         body = new b2BodyDef();
         body.type = b2Body.b2_dynamicBody;
@@ -294,7 +295,7 @@
         fixture.shape = new b2PolygonShape();
         fixture.shape.SetAsBox(this.upperArmLength / 2, 6);
         fixture.density = this.upperArmDensity;
-        fixture.filter.maskBits = CATEGORY_HANDHOLD;
+        fixture.filter.maskBits = 0;
         fixture.filter.categoryBits = CATEGORY_PLAYER;
         dest.upperArm.CreateFixture(fixture);
 
@@ -312,10 +313,12 @@
         //rjd.motorSpeed = -0.1;
         rjd.maxMotorTorque = this.elbowMaxTorque;
         dest.shoulder = this.world.CreateJoint(rjd);
+        //</editor-fold>
 
         /* keep the ref to the upper arm def around so we can use it for position */
         prevBody = body;
 
+        //<editor-fold desc="lower arm and elbow">
         /* make the lower arm */
         body = new b2BodyDef();
         body.type = b2Body.b2_dynamicBody;
@@ -329,7 +332,7 @@
         fixture.shape = new b2PolygonShape();
         fixture.shape.SetAsBox(this.lowerArmLength / 2, 6);
         fixture.density = this.lowerArmDensity;
-        fixture.filter.maskBits = CATEGORY_HANDHOLD;
+        fixture.filter.maskBits = 0;
         fixture.filter.categoryBits = CATEGORY_PLAYER;
         //body.angularDamping = this.armAngularDamping;
         dest.lowerArm.CreateFixture(fixture);
@@ -354,6 +357,25 @@
         }
         rjd.enableLimit = true;
         dest.elbow = this.world.CreateJoint(rjd);
+        //</editor-fold>
+
+        /* keep the ref for the lower arm around to find the hand position */
+        prevBody = body;
+
+        /* create a hand sensor, so that he only grabs hold using the hand. */
+        /* position it right at the end of the arm. */
+        fixture = new b2FixtureDef();
+        fixture.shape = new b2CircleShape();
+        fixture.shape.SetRadius(5);
+        fixture.shape.density = 0;
+        fixture.shape.SetLocalPosition(new b2Vec2(
+            dir * this.lowerArmLength / 2,
+            0
+        ));
+        fixture.filter.maskBits = CATEGORY_HANDHOLD;
+        fixture.filter.categoryBits = CATEGORY_PLAYER;
+        fixture.filter.isSensor = true;
+        dest.lowerArm.CreateFixture(fixture);
     };
 
     /**
@@ -382,7 +404,7 @@
         fixture.shape = new b2PolygonShape();
         fixture.shape.SetAsBox(this.thighWidth, this.thighLength / 2);
         fixture.density = this.thighDensity;
-        fixture.filter.maskBits = CATEGORY_HANDHOLD;
+        fixture.filter.maskBits = 0;
         fixture.filter.categoryBits = CATEGORY_PLAYER;
         dest.thigh.CreateFixture(fixture);
 
@@ -415,7 +437,7 @@
         fixture.shape = new b2PolygonShape();
         fixture.shape.SetAsBox(this.calfWidth, this.calfLength / 2);
         fixture.density = this.calfDensity;
-        fixture.filter.maskBits = CATEGORY_HANDHOLD;
+        fixture.filter.maskBits = 0;
         fixture.filter.categoryBits = CATEGORY_PLAYER;
         dest.calf.CreateFixture(fixture);
 
@@ -454,9 +476,6 @@
 
         if (category_bits == undefined) category_bits = CATEGORY_HANDHOLD;
 
-        this.world = world;
-
-        /* create a little target too */
         body = new b2BodyDef();
         body.type = b2Body.b2_staticBody;
         fixture = new b2FixtureDef();
@@ -465,7 +484,7 @@
         fixture.filter.categoryBits = category_bits;
         fixture.filter.isSensor = true;
         body.position.Set(x, y);
-        this.body = this.world.CreateBody(body);
+        this.body = world.CreateBody(body);
         this.body.CreateFixture(fixture);
     };
 
