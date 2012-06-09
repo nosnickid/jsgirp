@@ -11,10 +11,12 @@
         b2Body = Box2D.Dynamics.b2Body,
         b2FixtureDef = Box2D.Dynamics.b2FixtureDef,
         b2PolygonShape = Box2D.Collision.Shapes.b2PolygonShape,
+        b2CircleShape = Box2D.Collision.Shapes.b2CircleShape,
         b2RevoluteJointDef = Box2D.Dynamics.Joints.b2RevoluteJointDef,
         b2WeldJointDef = Box2D.Dynamics.Joints.b2WeldJointDef,
         b2Math = Box2D.Common.Math.b2Math,
         b2WorldManifold = Box2D.Collision.b2WorldManifold,
+        b2ContactListener = Box2D.Dynamics.b2ContactListener,
         CATEGORY_HANDHOLD = 0x1,
         CATEGORY_PLAYER = 0x2,
         CATEGORY_STARTING_WELD = 0x4,
@@ -32,21 +34,21 @@
     girpgame.prototype.bindInput = function(el) {
         var that = this;
         $(window).bind('keydown', function(event) {
-            that.input(event.keyCode, 1);
+            that.onInput(event.keyCode, 1);
         });
         $(window).bind('keyup', function(event) {
-            that.input(event.keyCode, 0);
+            that.onInput(event.keyCode, 0);
         });
     };
 
 
-    girpgame.prototype.input = function(keyCode, down) {
+    girpgame.prototype.onInput = function(keyCode, down) {
         switch(keyCode) {
             case 82:
-                this.leftArm = down;
+                this.input.leftArm = down;
                 break;
             case 84:
-                this.rightArm = down;
+                this.input.rightArm = down;
                 break;
             case 17:
             case 32:
@@ -97,22 +99,30 @@
         this.calfDensity = 1;
 
         /* input flags */
-        this.leftArm = this.rightArm = this.heave = 0;
-
-        /* nodes held by the relevant arm */
-        this.leftArmNode = this.rightArmNode = 0;
+        this.input = {
+            leftArm: 0,
+            rightArm: 0,
+            heave: 0
+        };
 
         this.world = world;
 
-        this.goal = new handhold(this.world, 50, 50);
-        this.goal2 = new handhold(this.world, 550, 50);
+        this.listener = new b2ContactListener();
+        this.listener.BeginContact = this.onBeginContact.bind(this);
+        this.world.SetContactListener(this.listener);
 
-        new handhold(this.world, 0, 0);
+        this.goal = new handhold(this.world, 50, 50);
+        this.goal2 = new handhold(this.world, 350, 50);
+
+        //new handhold(this.world, 0, 0);
 
          /* Create the player */
         this.player = {};
-        this.player.left = {};
-        this.player.right = {};
+        this.player.left = { dir: 1 };
+        this.player.right = { dir: -1 };
+
+        /* nodes held by the relevant arm */
+        this.player.left.armNode = this.player.right.armNode = undefined;
 
         /* start with a torso */
         body = new b2BodyDef();
@@ -145,64 +155,75 @@
         this.startingWeldBJoint = this.world.CreateJoint(rjd);
     };
 
+    girpgame.prototype.onBeginContact = function(contact, manifold) {
+        var hold, arm;
+
+        if (contact.m_manifold == undefined) return;
+
+        if (contact.m_fixtureA.m_body == this.goal.body || contact.m_fixtureA.m_body == this.goal2.body) {
+            hold = contact.m_fixtureA;
+            arm = contact.m_fixtureB.m_body;
+        } else if (contact.m_fixtureB.m_body == this.goal.body || contact.m_fixtureB.m_body == this.goal2.body) {
+            hold = contact.m_fixtureB;
+            arm = contact.m_fixtureA.m_body;
+        } else {
+            hold = 0;
+        }
+
+        if (hold) {
+            var wm = new b2WorldManifold();
+            wm.Initialize(contact.m_manifold, contact.m_fixtureA.m_body.m_xf, contact.m_fixtureA.m_shape.m_radius, contact.m_fixtureB.m_body.m_xf, contact.m_fixtureB.m_shape.m_radius);
+            if (arm == this.player.left.lowerArm && this.input.leftArm) {
+                this.player.left.armNode = hold;
+                this.player.left.armJointPos = wm.m_points[0];
+            } else if (arm == this.player.right.lowerArm && this.input.rightArm) {
+                this.player.right.armNode = hold;
+                this.player.right.armJointPos = wm.m_points[0];
+            }
+        }
+
+    };
+
     /**
      * Look out for contacts to attach hands to, and do the heaving / reaching
      */
     girpgame.prototype.tick = function() {
-        var contact;
-        var hold, arm;
 
-        for(contact = this.world.GetContactList(); contact; contact = contact.next) {
-            if (contact.m_fixtureA.m_body == this.goal.body) {
-                hold = contact.m_fixtureA;
-                arm = contact.m_fixtureB.m_body;
-            } else if (contact.m_fixtureB.m_body == this.goal.body) {
-                hold = contact.m_fixtureB;
-                arm = contact.m_fixtureA.m_body;
-            } else {
-                hold = 0;
-            }
+        this.tickArm(this.input.leftArm, this.player.left, this.goal);
+        this.tickArm(this.input.rightArm, this.player.right, this.goal2);
 
-            if (hold) {
-                var wm = new b2WorldManifold();
-                // wm.Initialize(contact, contact.m_fixtureA.m_body.m_xf, contact.m_fixtureA.m_shape.radius, contact.m_fixtureB.m_body.m_xf, contact.m_fixtureB.m_shape.radius);
-                wm.Initialize(contact.m_manifold, contact.m_fixtureA.m_body.m_xf, contact.m_fixtureA.m_shape.radius, contact.m_fixtureB.m_body.m_xf, contact.m_fixtureB.m_shape.radius);
-                if (arm == this.player.left.lowerArm && this.leftArm) {
-                    var rjd;
-                    rjd = new b2RevoluteJointDef;
-                    rjd.Initialize(hold.m_body, arm, wm.m_points[0]);
+        this.doHeave(this.player.left, this.player.left.armNode && this.heave);
+        this.doHeave(this.player.right, this.player.right.armNode && this.heave);
+    };
 
-                    this.leftArmNode = hold.m_body;
-                    this.leftArmJoint = this.world.CreateJoint(rjd);
+    /**
+     * Manage reaching for a node, creating a rotate joint if we grabbed a hold in the last frame, and removing
+     * the joint if we let go.
+     *
+     * @param input boolean whether the key is down
+     * @param side  this.player.left or .right, all the relevant box2d objects.
+     * @param goal  the goal that the player should reach for with this arm.
+     */
+    girpgame.prototype.tickArm = function(input, side, goal) {
+        if (input && side.armNode && !side.armJoint) {
+            // last tick they hit something, so connect them up!
+            var rjd;
+            rjd = new b2RevoluteJointDef;
+            rjd.Initialize(side.armNode.m_body, side.lowerArm, side.armJointPos);
 
-                    this.destroyWelds();
-                } else if (arm == this.player.right.lowerArm) {
-                    this.rightArm = 1;
-                    this.rightArmNode = hold.m_body;
-                }
-            }
+            side.armNode.m_body.m_color = "#ee00ee";
+            side.armJoint = this.world.CreateJoint(rjd);
+
+            this.destroyWelds();
+        } else if (input && !side.armNode) {
+            // they're reaching!
+            this.reachFor(side.lowerArm, this.lowerArmLength, side.dir, goal);
+            this.reachFor(side.upperArm, this.upperArmLength, side.dir, goal);
+        } else if (!input && side.armJoint) {
+            // they let go!
+            this.world.DestroyJoint(side.armJoint);
+            side.armJoint = side.armNode = undefined;
         }
-
-
-        if (this.leftArm && !this.leftArmJoint) {
-            this.reachFor(this.player.left.lowerArm, this.lowerArmLength, -1, this.goal);
-            this.reachFor(this.player.left.upperArm, this.upperArmLength, -1, this.goal);
-        } else if (!this.leftArm && this.leftArmJoint) {
-            this.world.DestroyJoint(this.leftArmJoint);
-            this.leftArmJoint = this.leftArmNode = undefined;
-        }
-        if (this.rightArm) {
-            this.reachFor(this.player.right.lowerArm, this.lowerArmLength, 1, this.goal2);
-            this.reachFor(this.player.right.upperArm, this.upperArmLength, 1, this.goal2);
-        } else {
-            if (this.rightArmJoint) {
-                this.world.DestroyJoint(this.rightArmJoint);
-                this.rightArmJoint = this.rightArmNode = undefined;
-            }
-        }
-
-        this.doHeave(this.player.left, this.leftArmNode && this.heave);
-        this.doHeave(this.player.right, this.rightArmNode && this.heave);
     };
 
     /**
@@ -245,7 +266,7 @@
 
             this.startingWeldAJoint = this.startingWeldBJoint = this.startingWeldA = this.startingWeldB = undefined;
         }
-    }
+    };
 
 
     /**
@@ -439,8 +460,8 @@
         body = new b2BodyDef();
         body.type = b2Body.b2_staticBody;
         fixture = new b2FixtureDef();
-        fixture.shape = new b2PolygonShape();
-        fixture.shape.SetAsBox(10, 10);
+        fixture.shape = new b2CircleShape();
+        fixture.shape.SetRadius(5);
         fixture.filter.categoryBits = category_bits;
         fixture.filter.isSensor = true;
         body.position.Set(x, y);
