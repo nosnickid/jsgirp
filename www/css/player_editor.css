@@ -1,0 +1,19 @@
+#player_editor {
+    position: absolute;
+    top: 0;
+    left: 850px;
+    width: 40em;
+    border: 1px solid black;
+}
+
+#player_editor .row label {
+    width: 5em;
+    display: inline-block;
+    text-align: right;
+    padding-right: 1em;
+}
+
+#player_editor .row .slider {
+    display: inline-block;
+    width: 30em;
+}

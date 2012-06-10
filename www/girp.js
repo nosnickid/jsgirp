@@ -105,7 +105,7 @@
         body.type = b2Body.b2_dynamicBody;
         fixture = new b2FixtureDef();
         fixture.shape = new b2PolygonShape();
-        fixture.shape.SetAsBox(this.playerDef.bodySize.w / 2, this.playerDef.bodySize.h / 2);
+        fixture.shape.SetAsBox(this.playerDef.bodySizeWidth / 2, this.playerDef.bodySizeHeight / 2);
         fixture.density = 1;
         fixture.filter.maskBits = CATEGORY_HANDHOLD;
         fixture.filter.categoryBits = CATEGORY_PLAYER;
@@ -504,14 +504,16 @@
     window.GirpPlayerDef = function() {
         /* all sizes used to define the shape of the player. */
         this.bodyCenter = { x: 220, y: 100 };
-        this.bodySize = { w: 80, h: 120 };
+        this.bodySizeWidth = 80;
+        this.bodySizeHeight = 120;
+
         this.bodyAngularDamping = 0.9999;
         /* arm setup */
         this.upperArmLength = 60;
         this.upperArmDensity = 0.6;
         this.upperArmPos = {
             x: this.upperArmLength,
-            y: 0.8 * this.bodySize.h / 2
+            y: 0.8 * this.bodySizeHeight / 2
         };
 
         this.lowerArmLength = 80;
@@ -528,8 +530,8 @@
         this.thighDensity = 0.6;
         this.thighAngularDamping = 1;
         this.thighPos = {
-            x: 0.7 * this.bodySize.w / 2,
-            y: 1.4 * this.bodySize.h / 2
+            x: 0.7 * this.bodySizeWidth / 2,
+            y: 1.4 * this.bodySizeHeight / 2
         };
         this.calfLength = 80;
         this.calfWidth = 6;
