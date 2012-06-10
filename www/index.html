@@ -28,6 +28,7 @@
     var canvasWidth = canvas.width;
     var canvasHeight = canvas.height;
     var timeout;
+    var playerDef;
 
     /* dodgy call into our dodgy renderer. */
     window.setRenderContext(ctx);
@@ -35,8 +36,10 @@
     function init() {
         if (girp) girp.stop();
 
+        playerDef = new GirpPlayerDef();
+
         girp = new GirpGame();
-        girp.initWorld();
+        girp.initWorld(playerDef);
         girp.bindInput(window);
         girp.setRenderCallback(draw);
     }

@@ -63,44 +63,13 @@
 
     };
 
-    GirpGame.prototype.initWorld = function() {
+    GirpGame.prototype.initWorld = function(playerDef) {
         var fixture;
         var body;
         var gravity;
         var doSleep;
 
-        /* all sizes used to define the shape of the player. */
-        this.bodyCenter = { x: 220, y: 100 };
-        this.bodySize = { w: 80, h: 120 };
-        this.bodyAngularDamping = 0.9999;
-        /* arm setup */
-        this.upperArmLength = 60;
-        this.upperArmDensity = 0.6;
-        this.upperArmPos = {
-            x: this.upperArmLength,
-            y: 0.8 * this.bodySize.h / 2
-        };
-
-        this.lowerArmLength = 80;
-        this.lowerArmDensity = 0.3;
-        this.armAngularDamping = 1;
-
-        this.elbowMaxTorque = 100000000000;
-        this.elbowMotorSpeed = 15;
-        this.reachForce = 425000;
-
-        /* leg setup */
-        this.thighLength = 80;
-        this.thighWidth = 6;
-        this.thighDensity = 0.6;
-        this.thighAngularDamping = 1;
-        this.thighPos = {
-            x: 0.7 * this.bodySize.w / 2,
-            y: 1.4 * this.bodySize.h / 2
-        };
-        this.calfLength = 80;
-        this.calfWidth = 6;
-        this.calfDensity = 1;
+        this.playerDef = playerDef;
 
         /* input flags */
         this.input = {
@@ -136,12 +105,12 @@
         body.type = b2Body.b2_dynamicBody;
         fixture = new b2FixtureDef();
         fixture.shape = new b2PolygonShape();
-        fixture.shape.SetAsBox(this.bodySize.w / 2, this.bodySize.h / 2);
+        fixture.shape.SetAsBox(this.playerDef.bodySize.w / 2, this.playerDef.bodySize.h / 2);
         fixture.density = 1;
         fixture.filter.maskBits = CATEGORY_HANDHOLD;
         fixture.filter.categoryBits = CATEGORY_PLAYER;
-        body.angularDamping = this.bodyAngularDamping;
-        body.position.Set(this.bodyCenter.x, this.bodyCenter.y);
+        body.angularDamping = this.playerDef.bodyAngularDamping;
+        body.position.Set(this.playerDef.bodyCenter.x, this.playerDef.bodyCenter.y);
         this.player.torso = this.world.CreateBody(body);
         this.player.torso.CreateFixture(fixture);
 
@@ -152,8 +121,8 @@
         this._initLeg(this.player.right, 1);
 
         /* start the game with the body welded to a fixed spot. */
-        this.startingWeldA = new handhold(this.world, this.bodyCenter.x + 5, this.bodyCenter.y, CATEGORY_STARTING_WELD);
-        this.startingWeldB = new handhold(this.world, this.bodyCenter.x - 5, this.bodyCenter.y, CATEGORY_STARTING_WELD);
+        this.startingWeldA = new handhold(this.world, this.playerDef.bodyCenter.x + 5, this.playerDef.bodyCenter.y, CATEGORY_STARTING_WELD);
+        this.startingWeldB = new handhold(this.world, this.playerDef.bodyCenter.x - 5, this.playerDef.bodyCenter.y, CATEGORY_STARTING_WELD);
 
         var rjd = new b2WeldJointDef();
         rjd.Initialize(this.player.torso, this.startingWeldA.body, this.startingWeldA.body.m_xf.position);
@@ -261,8 +230,8 @@
             this._destroyWelds();
         } else if (input && !side.armNode) {
             // they're reaching!
-            this._reachFor(side.lowerArm, this.lowerArmLength, side.dir, goal);
-            this._reachFor(side.upperArm, this.upperArmLength, side.dir, goal);
+            this._reachFor(side.lowerArm, this.playerDef.lowerArmLength, side.dir, goal);
+            this._reachFor(side.upperArm, this.playerDef.upperArmLength, side.dir, goal);
         } else if (!input && side.armJoint) {
             // they let go!
             this.world.DestroyJoint(side.armJoint);
@@ -286,7 +255,7 @@
         var armDir = b2Math.MulMV(arm.m_xf.R, new b2Vec2(dir * armLength / 2, 0));
         armDir.Normalize();
 
-        force.Multiply(this.reachForce);
+        force.Multiply(this.playerDef.reachForce);
 
         arm.ApplyForce(force, forcePos);
     };
@@ -330,15 +299,15 @@
         body = new b2BodyDef();
         body.type = b2Body.b2_dynamicBody;
         body.position.Set(
-            this.bodyCenter.x + dir * this.upperArmPos.x,
-            this.bodyCenter.y - this.upperArmPos.y
+            this.playerDef.bodyCenter.x + dir * this.playerDef.upperArmPos.x,
+            this.playerDef.bodyCenter.y - this.playerDef.upperArmPos.y
         );
-        body.angularDamping = this.armAngularDamping;
+        body.angularDamping = this.playerDef.armAngularDamping;
         dest.upperArm = this.world.CreateBody(body);
         fixture = new b2FixtureDef();
         fixture.shape = new b2PolygonShape();
-        fixture.shape.SetAsBox(this.upperArmLength / 2, 6);
-        fixture.density = this.upperArmDensity;
+        fixture.shape.SetAsBox(this.playerDef.upperArmLength / 2, 6);
+        fixture.density = this.playerDef.upperArmDensity;
         fixture.filter.maskBits = 0;
         fixture.filter.categoryBits = CATEGORY_PLAYER;
         dest.upperArm.CreateFixture(fixture);
@@ -346,8 +315,8 @@
         /* connect it to the body - SHOULDER joint */
         rjd = new b2RevoluteJointDef();
         anchor = new b2Vec2(
-            this.bodyCenter.x + dir * this.upperArmPos.x - dir * this.upperArmLength / 2 * 0.9,
-            this.bodyCenter.y - this.upperArmPos.y
+            this.playerDef.bodyCenter.x + dir * this.playerDef.upperArmPos.x - dir * this.playerDef.upperArmLength / 2 * 0.9,
+            this.playerDef.bodyCenter.y - this.playerDef.upperArmPos.y
         );
         rjd.Initialize(this.player.torso, dest.upperArm, anchor);
         rjd.enableMotor = false;
@@ -355,7 +324,7 @@
         rjd.upperAngle = 0.9 * 3.14159;
         rjd.enableLimit = true;
         //rjd.motorSpeed = -0.1;
-        rjd.maxMotorTorque = this.elbowMaxTorque;
+        rjd.maxMotorTorque = this.playerDef.elbowMaxTorque;
         dest.shoulder = this.world.CreateJoint(rjd);
         //</editor-fold>
 
@@ -367,31 +336,31 @@
         body = new b2BodyDef();
         body.type = b2Body.b2_dynamicBody;
         body.position.Set(
-            prevBody.position.x + dir * this.upperArmLength / 2 + dir * this.lowerArmLength / 2,
+            prevBody.position.x + dir * this.playerDef.upperArmLength / 2 + dir * this.playerDef.lowerArmLength / 2,
             prevBody.position.y
         );
         dest.lowerArm = this.world.CreateBody(body);
 
         fixture = new b2FixtureDef();
         fixture.shape = new b2PolygonShape();
-        fixture.shape.SetAsBox(this.lowerArmLength / 2, 6);
-        fixture.density = this.lowerArmDensity;
+        fixture.shape.SetAsBox(this.playerDef.lowerArmLength / 2, 6);
+        fixture.density = this.playerDef.lowerArmDensity;
         fixture.filter.maskBits = 0;
         fixture.filter.categoryBits = CATEGORY_PLAYER;
-        //body.angularDamping = this.armAngularDamping;
+        //body.angularDamping = this.playerDef.armAngularDamping;
         dest.lowerArm.CreateFixture(fixture);
 
         /* and connect it to the upper arm. - ELBOW joint */
         rjd = new b2RevoluteJointDef();
         anchor = new b2Vec2(
-            body.position.x - dir * this.lowerArmLength / 2,
+            body.position.x - dir * this.playerDef.lowerArmLength / 2,
             body.position.y
         );
         rjd.Initialize(dest.upperArm, dest.lowerArm, anchor);
         rjd.enableMotor = false;
         rjd.enableLimit = true;
-        rjd.motorSpeed = -dir * this.elbowMotorSpeed;
-        rjd.maxMotorTorque = this.elbowMaxTorque;
+        rjd.motorSpeed = -dir * this.playerDef.elbowMotorSpeed;
+        rjd.maxMotorTorque = this.playerDef.elbowMaxTorque;
         if (dir < 0) {
             rjd.lowerAngle = 0;
             rjd.upperAngle = 0.5 * 3.14159;
@@ -413,7 +382,7 @@
         fixture.shape.SetRadius(5);
         fixture.shape.density = 0;
         fixture.shape.SetLocalPosition(new b2Vec2(
-            dir * this.lowerArmLength / 2,
+            dir * this.playerDef.lowerArmLength / 2,
             0
         ));
         fixture.filter.maskBits = CATEGORY_HANDHOLD;
@@ -439,15 +408,15 @@
         body = new b2BodyDef();
         body.type = b2Body.b2_dynamicBody;
         body.position.Set(
-            this.bodyCenter.x + dir * this.thighPos.x,
-            this.bodyCenter.y + this.thighPos.y
+            this.playerDef.bodyCenter.x + dir * this.playerDef.thighPos.x,
+            this.playerDef.bodyCenter.y + this.playerDef.thighPos.y
         );
-        body.angularDamping = this.thighAngularDamping;
+        body.angularDamping = this.playerDef.thighAngularDamping;
         dest.thigh = this.world.CreateBody(body);
         fixture = new b2FixtureDef();
         fixture.shape = new b2PolygonShape();
-        fixture.shape.SetAsBox(this.thighWidth, this.thighLength / 2);
-        fixture.density = this.thighDensity;
+        fixture.shape.SetAsBox(this.playerDef.thighWidth, this.playerDef.thighLength / 2);
+        fixture.density = this.playerDef.thighDensity;
         fixture.filter.maskBits = 0;
         fixture.filter.categoryBits = CATEGORY_PLAYER;
         dest.thigh.CreateFixture(fixture);
@@ -457,7 +426,7 @@
         rjd = new b2RevoluteJointDef();
         anchor = new b2Vec2(
             body.position.x,
-            body.position.y - this.thighLength / 2
+            body.position.y - this.playerDef.thighLength / 2
         );
         rjd.Initialize(this.player.torso, dest.thigh, anchor);
         rjd.enableMotor = false;
@@ -473,14 +442,14 @@
         body = new b2BodyDef();
         body.type = b2Body.b2_dynamicBody;
         body.position.Set(
-            this.bodyCenter.x + dir * this.thighPos.x,
-            this.bodyCenter.y + this.thighPos.y + this.thighLength
+            this.playerDef.bodyCenter.x + dir * this.playerDef.thighPos.x,
+            this.playerDef.bodyCenter.y + this.playerDef.thighPos.y + this.playerDef.thighLength
         );
         dest.calf = this.world.CreateBody(body);
         fixture = new b2FixtureDef();
         fixture.shape = new b2PolygonShape();
-        fixture.shape.SetAsBox(this.calfWidth, this.calfLength / 2);
-        fixture.density = this.calfDensity;
+        fixture.shape.SetAsBox(this.playerDef.calfWidth, this.playerDef.calfLength / 2);
+        fixture.density = this.playerDef.calfDensity;
         fixture.filter.maskBits = 0;
         fixture.filter.categoryBits = CATEGORY_PLAYER;
         dest.calf.CreateFixture(fixture);
@@ -489,7 +458,7 @@
         rjd = new b2RevoluteJointDef();
         anchor = new b2Vec2(
             body.position.x,
-            body.position.y - this.thighLength / 2
+            body.position.y - this.playerDef.thighLength / 2
         );
         rjd.Initialize(dest.thigh, dest.calf, anchor);
         rjd.enableMotor = false;
@@ -532,6 +501,40 @@
         this.body.CreateFixture(fixture);
     };
 
+    window.GirpPlayerDef = function() {
+        /* all sizes used to define the shape of the player. */
+        this.bodyCenter = { x: 220, y: 100 };
+        this.bodySize = { w: 80, h: 120 };
+        this.bodyAngularDamping = 0.9999;
+        /* arm setup */
+        this.upperArmLength = 60;
+        this.upperArmDensity = 0.6;
+        this.upperArmPos = {
+            x: this.upperArmLength,
+            y: 0.8 * this.bodySize.h / 2
+        };
+
+        this.lowerArmLength = 80;
+        this.lowerArmDensity = 0.3;
+        this.armAngularDamping = 1;
+
+        this.elbowMaxTorque = 100000000000;
+        this.elbowMotorSpeed = 15;
+        this.reachForce = 425000;
+
+        /* leg setup */
+        this.thighLength = 80;
+        this.thighWidth = 6;
+        this.thighDensity = 0.6;
+        this.thighAngularDamping = 1;
+        this.thighPos = {
+            x: 0.7 * this.bodySize.w / 2,
+            y: 1.4 * this.bodySize.h / 2
+        };
+        this.calfLength = 80;
+        this.calfWidth = 6;
+        this.calfDensity = 1;
+    };
 
 })(jQuery);
 
