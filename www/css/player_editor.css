@@ -6,11 +6,16 @@
     border: 1px solid black;
 }
 
+#player_editor .row {
+    vertical-align: top;
+}
+
 #player_editor .row label {
     width: 5em;
     display: inline-block;
     text-align: right;
     padding-right: 1em;
+    vertical-align: top;
 }
 
 #player_editor .row .slider {
