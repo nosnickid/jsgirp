@@ -110,7 +110,7 @@
         fixture.filter.maskBits = CATEGORY_HANDHOLD;
         fixture.filter.categoryBits = CATEGORY_PLAYER;
         body.angularDamping = this.playerDef.bodyAngularDamping;
-        body.position.Set(this.playerDef.bodyCenter.x, this.playerDef.bodyCenter.y);
+        body.position.Set(this.playerDef.bodyCenterX, this.playerDef.bodyCenterY);
         this.player.torso = this.world.CreateBody(body);
         this.player.torso.CreateFixture(fixture);
 
@@ -121,8 +121,8 @@
         this._initLeg(this.player.right, 1);
 
         /* start the game with the body welded to a fixed spot. */
-        this.startingWeldA = new handhold(this.world, this.playerDef.bodyCenter.x + 5, this.playerDef.bodyCenter.y, CATEGORY_STARTING_WELD);
-        this.startingWeldB = new handhold(this.world, this.playerDef.bodyCenter.x - 5, this.playerDef.bodyCenter.y, CATEGORY_STARTING_WELD);
+        this.startingWeldA = new handhold(this.world, this.playerDef.bodyCenterX + 5, this.playerDef.bodyCenterY, CATEGORY_STARTING_WELD);
+        this.startingWeldB = new handhold(this.world, this.playerDef.bodyCenterX - 5, this.playerDef.bodyCenterY, CATEGORY_STARTING_WELD);
 
         var rjd = new b2WeldJointDef();
         rjd.Initialize(this.player.torso, this.startingWeldA.body, this.startingWeldA.body.m_xf.position);
@@ -299,8 +299,8 @@
         body = new b2BodyDef();
         body.type = b2Body.b2_dynamicBody;
         body.position.Set(
-            this.playerDef.bodyCenter.x + dir * this.playerDef.upperArmPos.x,
-            this.playerDef.bodyCenter.y - this.playerDef.upperArmPos.y
+            this.playerDef.bodyCenterX + dir * this.playerDef.upperArmPosX,
+            this.playerDef.bodyCenterY - this.playerDef.upperArmPosY
         );
         body.angularDamping = this.playerDef.armAngularDamping;
         dest.upperArm = this.world.CreateBody(body);
@@ -315,8 +315,8 @@
         /* connect it to the body - SHOULDER joint */
         rjd = new b2RevoluteJointDef();
         anchor = new b2Vec2(
-            this.playerDef.bodyCenter.x + dir * this.playerDef.upperArmPos.x - dir * this.playerDef.upperArmLength / 2 * 0.9,
-            this.playerDef.bodyCenter.y - this.playerDef.upperArmPos.y
+            this.playerDef.bodyCenterX + dir * this.playerDef.upperArmPosX - dir * this.playerDef.upperArmLength / 2 * 0.9,
+            this.playerDef.bodyCenterY - this.playerDef.upperArmPosY
         );
         rjd.Initialize(this.player.torso, dest.upperArm, anchor);
         rjd.enableMotor = false;
@@ -408,8 +408,8 @@
         body = new b2BodyDef();
         body.type = b2Body.b2_dynamicBody;
         body.position.Set(
-            this.playerDef.bodyCenter.x + dir * this.playerDef.thighPos.x,
-            this.playerDef.bodyCenter.y + this.playerDef.thighPos.y
+            this.playerDef.bodyCenterX + dir * this.playerDef.thighPosX,
+            this.playerDef.bodyCenterY + this.playerDef.thighPosY
         );
         body.angularDamping = this.playerDef.thighAngularDamping;
         dest.thigh = this.world.CreateBody(body);
@@ -442,8 +442,8 @@
         body = new b2BodyDef();
         body.type = b2Body.b2_dynamicBody;
         body.position.Set(
-            this.playerDef.bodyCenter.x + dir * this.playerDef.thighPos.x,
-            this.playerDef.bodyCenter.y + this.playerDef.thighPos.y + this.playerDef.thighLength
+            this.playerDef.bodyCenterX + dir * this.playerDef.thighPosX,
+            this.playerDef.bodyCenterY + this.playerDef.thighPosY + this.playerDef.thighLength
         );
         dest.calf = this.world.CreateBody(body);
         fixture = new b2FixtureDef();
@@ -503,7 +503,8 @@
 
     window.GirpPlayerDef = function() {
         /* all sizes used to define the shape of the player. */
-        this.bodyCenter = { x: 220, y: 100 };
+        this.bodyCenterX = 220;
+        this.bodyCenterY = 100;
         this.bodySizeWidth = 80;
         this.bodySizeHeight = 120;
 
@@ -511,10 +512,8 @@
         /* arm setup */
         this.upperArmLength = 60;
         this.upperArmDensity = 0.6;
-        this.upperArmPos = {
-            x: this.upperArmLength,
-            y: 0.8 * this.bodySizeHeight / 2
-        };
+        this.upperArmPosX = this.upperArmLength;
+        this.upperArmPosY = 0.8 * this.bodySizeHeight / 2;
 
         this.lowerArmLength = 80;
         this.lowerArmDensity = 0.3;
@@ -529,10 +528,9 @@
         this.thighWidth = 6;
         this.thighDensity = 0.6;
         this.thighAngularDamping = 1;
-        this.thighPos = {
-            x: 0.7 * this.bodySizeWidth / 2,
-            y: 1.4 * this.bodySizeHeight / 2
-        };
+        this.thighPosX = 0.7 * this.bodySizeWidth / 2;
+        this.thighPosY = 1.4 * this.bodySizeHeight / 2
+
         this.calfLength = 80;
         this.calfWidth = 6;
         this.calfDensity = 1;
