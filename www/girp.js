@@ -59,7 +59,10 @@
                 break;
             default:
                 window.console.log("skipped " + event.keyCode);
+                return false;
         }
+
+        return true;
 
     };
 
@@ -507,42 +510,34 @@
     };
 
     window.GirpPlayerDef = function() {
-        /* all sizes used to define the shape of the player. */
         this.bodyCenterX = 220;
         this.bodyCenterY = 100;
-        this.bodySizeWidth = 80;
+        this.bodySizeWidth = 70;
         this.bodySizeHeight = 120;
+        this.bodyAngularDamping = 0;
         this.torsoDensity = 1;
-
-        this.bodyAngularDamping = 0.9999;
-        /* arm setup */
-        this.upperArmLength = 60;
-        this.upperArmDensity = 0.6;
-        this.upperArmPosX = this.upperArmLength;
-        this.upperArmPosY = 0.8 * this.bodySizeHeight / 2;
-
-        this.lowerArmLength = 80;
-        this.lowerArmDensity = 0.3;
-        this.armAngularDamping = 1;
-
-        this.elbowMaxTorque = 100000000000;
-        this.elbowMotorSpeed = 15;
-        this.reachForce = 425000;
-
-        /* leg setup */
+        this.upperArmLength = 50;
+        this.upperArmDensity = 2;
+        this.upperArmPosX = 60;
+        this.upperArmPosY = 48;
+        this.lowerArmLength = 60;
+        this.lowerArmDensity = 2;
+        this.armAngularDamping = 0;
+        this.elbowMaxTorque = 10000000000;
+        this.elbowMotorSpeed = 20;
+        this.reachForce = 2000000;
         this.thighLength = 80;
-        this.thighWidth = 6;
-        this.thighDensity = 0.6;
-        this.thighAngularDamping = 1;
-        this.thighPosX = 0.7 * this.bodySizeWidth / 2;
-        this.thighPosY = 1.4 * this.bodySizeHeight / 2
-
-        this.hipMinAngle = 0;
+        this.thighWidth = 11;
+        this.thighDensity = 2;
+        this.thighAngularDamping = 0;
+        this.thighPosX = 22;
+        this.thighPosY = 100;
+        this.hipMinAngle = 0.2;
         this.hipMaxAngle = -4;
 
         this.calfLength = 80;
-        this.calfWidth = 6;
-        this.calfDensity = 1;
+        this.calfWidth = 8;
+        this.calfDensity = 2;
         this.calfAngularDamping = 0;
     };
 
