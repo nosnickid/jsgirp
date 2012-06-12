@@ -441,7 +441,7 @@
         body.type = b2Body.b2_dynamicBody;
         body.position.Set(
             this.playerDef.bodyCenterX + dir * this.playerDef.thighPosX,
-            this.playerDef.bodyCenterY + this.playerDef.thighPosY + this.playerDef.thighLength
+            this.playerDef.bodyCenterY + this.playerDef.thighPosY + this.playerDef.thighLength / 2 + this.playerDef.calfLength / 2
         );
         dest.calf = this.world.CreateBody(body);
         fixture = new b2FixtureDef();
@@ -456,7 +456,7 @@
         rjd = new b2RevoluteJointDef();
         anchor = new b2Vec2(
             body.position.x,
-            body.position.y - this.playerDef.thighLength / 2
+            body.position.y - this.playerDef.calfLength / 2
         );
         rjd.Initialize(dest.thigh, dest.calf, anchor);
         rjd.enableMotor = false;
