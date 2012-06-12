@@ -106,7 +106,7 @@
         fixture = new b2FixtureDef();
         fixture.shape = new b2PolygonShape();
         fixture.shape.SetAsBox(this.playerDef.bodySizeWidth / 2, this.playerDef.bodySizeHeight / 2);
-        fixture.density = 1;
+        fixture.density = this.playerDef.torsoDensity;
         fixture.filter.maskBits = CATEGORY_HANDHOLD;
         fixture.filter.categoryBits = CATEGORY_PLAYER;
         body.angularDamping = this.playerDef.bodyAngularDamping;
@@ -505,6 +505,7 @@
         this.bodyCenterY = 100;
         this.bodySizeWidth = 80;
         this.bodySizeHeight = 120;
+        this.torsoDensity = 1;
 
         this.bodyAngularDamping = 0.9999;
         /* arm setup */

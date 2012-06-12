@@ -112,12 +112,18 @@
             resetGame();
             draw();
         });
+
+        $('.resetAndGo').on('click', function() {
+            resetGame();
+            girp.start();
+        })
     });
+
 
 </script>
 
-<div style="cursor: pointer;" onclick="resetGame(); girp.start();">go</div>
-<div style="cursor: pointer;" onclick="resetGame(); draw()">reset</div>
+<div style="cursor: pointer;" class="resetAndGo bigButton">go</div>
+<div style="cursor: pointer;" class="bigButton" onclick="resetGame(); draw()">reset</div>
 
 <input type="checkbox" id="vel" onchange="window.d_velocityVector = this.checked;"><label for="vel">draw velocity vectors</label>
 
