@@ -428,9 +428,12 @@
         );
         rjd.Initialize(this.player.torso, dest.thigh, anchor);
         rjd.enableMotor = false;
-        //rjd.lowerAngle = -0.5 * 3.14159;
-        //rjd.upperAngle = 0.5 * 3.14159;
-        //rjd.enableLimit = true;
+        if (dir == -1) {
+            rjd.lowerAngle = this.playerDef.hipMinAngle;
+            rjd.upperAngle = this.playerDef.hipMaxAngle;
+            rjd.enableLimit = true;
+        }
+
         dest.hip = this.world.CreateJoint(rjd);
 
         /* keep the ref to the thigh def around so we can use it for position */
@@ -530,6 +533,9 @@
         this.thighAngularDamping = 1;
         this.thighPosX = 0.7 * this.bodySizeWidth / 2;
         this.thighPosY = 1.4 * this.bodySizeHeight / 2
+
+        this.hipMinAngle = 3.14159;
+        this.hipMaxAngle = -3.14159;
 
         this.calfLength = 80;
         this.calfWidth = 6;
