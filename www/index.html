@@ -56,17 +56,40 @@
         $('#playerDefJson').text(JSON.stringify(playerDef));
     }
 
-    function bindUiFromPlayerDef() {
-        $('.playerDefField').each(function() {
-            var field = $(this).attr('data-player-field');
+    function onPlayerFieldChange() {
+        var field;
+        field = $(this).data('player-field');
 
-            $(this).val(playerDef[field]);
-            $(this).off('change.playerDef').on('change.playerDef', function() {
-                playerDef[field] = parseFloat($(this).val());
-                resetGame();
-                draw();
-                dumpPlayerDefJson();
-            });
+        playerDef[field] = parseFloat($(this).val());
+        resetGame();
+        draw();
+        dumpPlayerDefJson();
+    }
+
+    function bindUiFromPlayerDef() {
+        var fieldList = $('#playerDefEditorRows');
+
+        fieldList.empty();
+
+        $.each(playerDef, function(field, value) {
+            var row, label, control;
+            var title = field;
+            title = title.replace(/([A-Z])/g, " $1");
+            title = title.charAt(0).toUpperCase() + title.slice(1);
+
+            row = $('<li></li>').addClass('row');
+            label = $('<label />').text(title).attr('for', 'playerDef' + field);
+            control = $('<input />')
+                .attr('type', 'number')
+                .attr('id', 'playerDef' + field)
+                .data('player-field', field)
+                .val(value)
+                .on('change', onPlayerFieldChange);
+
+
+            row.append(label).append(control);
+
+            fieldList.append(row);
         });
     }
 
@@ -100,28 +123,21 @@
 
 <div id="player_editor">
     <h1>Player Editor</h1>
-    <h2>Torso</h2>
 
-    <div class="row">
-        <label for="bodySizeWidth">Width:</label>
-        <input type="number" id="bodySizeWidth" class="playerDefField" data-player-field="bodySizeWidth" />
-    </div>
+    <ul id="playerDefEditorRows">
 
-
-    <div class="row">
-        <label for="bodySizeHeight">Height:</label>
-        <input type="number" id="bodySizeHeight" class="playerDefField" data-player-field="bodySizeHeight" />
-    </div>
+    </ul>
 
     <div class="row">
         <div>
             <label for="playerDefJson">As JSON:</label>
-            <textarea id="playerDefJson" cols="50" rows="5"></textarea>
+            <textarea id="playerDefJson" cols="50" rows="15"></textarea>
         </div>
         <div>
             <label for="loadPlayerDefFromJSON">&nbsp;</label>
             <button id="loadPlayerDefFromJSON">import JSON</button>
         </div>
+    </div>
 
 
 </div>
