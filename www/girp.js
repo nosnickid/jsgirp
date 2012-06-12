@@ -230,8 +230,7 @@
             this._destroyWelds();
         } else if (input && !side.armNode) {
             // they're reaching!
-            this._reachFor(side.lowerArm, this.playerDef.lowerArmLength, side.dir, goal);
-            this._reachFor(side.upperArm, this.playerDef.upperArmLength, side.dir, goal);
+            this._reachForWithHand(side, goal);
         } else if (!input && side.armJoint) {
             // they let go!
             this.world.DestroyJoint(side.armJoint);
@@ -240,24 +239,23 @@
     };
 
     /**
-     * Makes the specified arm part reach for the specified goal body.
+     * Apply a force on the specified arm to reach for the specified goal.
      *
-     * @param arm
-     * @param armLength
+     * @param side
      * @param goal
+     * @private
      */
-    GirpGame.prototype._reachFor = function(arm, armLength, dir, goal) {
-        var forcePos = b2Math.MulX(arm.m_xf, { y: 0, x: dir * armLength / 2});
-        var goalPosition = goal.body.m_xf.position.Copy();
-        var force = b2Math.SubtractVV(goalPosition, arm.m_xf.position);
-        force.Normalize();
+    GirpGame.prototype._reachForWithHand = function(side, goal) {
+        var forceDir;
+        var pos = side.lowerArm.m_xf.position.Copy();
 
-        var armDir = b2Math.MulMV(arm.m_xf.R, new b2Vec2(dir * armLength / 2, 0));
-        armDir.Normalize();
+        pos.Add(b2Math.MulMV(side.lowerArm.m_xf.R, side.handShape.GetLocalPosition()));
 
-        force.Multiply(this.playerDef.reachForce);
+        forceDir = b2Math.SubtractVV(goal.body.m_xf.position, pos);
+        forceDir.Normalize();
+        forceDir.Multiply(this.playerDef.reachForce);
 
-        arm.ApplyForce(force, forcePos);
+        side.lowerArm.ApplyForce(forceDir, pos);
     };
 
     /**
@@ -388,7 +386,7 @@
         fixture.filter.maskBits = CATEGORY_HANDHOLD;
         fixture.filter.categoryBits = CATEGORY_PLAYER;
         fixture.filter.isSensor = true;
-        dest.lowerArm.CreateFixture(fixture);
+        dest.handShape = dest.lowerArm.CreateFixture(fixture).GetShape();
     };
 
     /**
