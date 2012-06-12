@@ -443,6 +443,7 @@
             this.playerDef.bodyCenterX + dir * this.playerDef.thighPosX,
             this.playerDef.bodyCenterY + this.playerDef.thighPosY + this.playerDef.thighLength / 2 + this.playerDef.calfLength / 2
         );
+        body.angularDamping = this.playerDef.calfAngularDamping;
         dest.calf = this.world.CreateBody(body);
         fixture = new b2FixtureDef();
         fixture.shape = new b2PolygonShape();
@@ -533,6 +534,7 @@
         this.calfLength = 80;
         this.calfWidth = 6;
         this.calfDensity = 1;
+        this.calfAngularDamping = 0;
     };
 
 })(jQuery);
