@@ -428,11 +428,14 @@
         );
         rjd.Initialize(this.player.torso, dest.thigh, anchor);
         rjd.enableMotor = false;
-        if (dir == -1) {
-            rjd.lowerAngle = this.playerDef.hipMinAngle;
-            rjd.upperAngle = this.playerDef.hipMaxAngle;
-            rjd.enableLimit = true;
+        if (dir < 0) {
+            rjd.lowerAngle = dir * this.playerDef.hipMinAngle;
+            rjd.upperAngle = dir * this.playerDef.hipMaxAngle;
+        } else {
+            rjd.lowerAngle = dir * this.playerDef.hipMaxAngle;
+            rjd.upperAngle = dir * this.playerDef.hipMinAngle;
         }
+        rjd.enableLimit = true;
 
         dest.hip = this.world.CreateJoint(rjd);
 
@@ -534,8 +537,8 @@
         this.thighPosX = 0.7 * this.bodySizeWidth / 2;
         this.thighPosY = 1.4 * this.bodySizeHeight / 2
 
-        this.hipMinAngle = 3.14159;
-        this.hipMaxAngle = -3.14159;
+        this.hipMinAngle = 0;
+        this.hipMaxAngle = -4;
 
         this.calfLength = 80;
         this.calfWidth = 6;
