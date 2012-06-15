@@ -17,10 +17,11 @@
 
 #player_editor h3 {
     font-size: 1em;
+    cursor: pointer;
 }
 
 #player_editor .row label {
-    width: 9em;
+    width: 10em;
     display: inline-block;
     text-align: right;
     padding-right: 1em;
