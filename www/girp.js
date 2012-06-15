@@ -106,18 +106,7 @@
         this.player.left.armNode = this.player.right.armNode = undefined;
 
         /* start with a torso */
-        body = new b2BodyDef();
-        body.type = b2Body.b2_dynamicBody;
-        fixture = new b2FixtureDef();
-        fixture.shape = new b2PolygonShape();
-        fixture.shape.SetAsBox(this.playerDef.bodySizeWidth / 2, this.playerDef.bodySizeHeight / 2);
-        fixture.density = this.playerDef.torsoDensity;
-        fixture.filter.maskBits = CATEGORY_HANDHOLD;
-        fixture.filter.categoryBits = CATEGORY_PLAYER;
-        body.angularDamping = this.playerDef.bodyAngularDamping;
-        body.position.Set(this.playerDef.bodyCenterX, this.playerDef.bodyCenterY);
-        this.player.torso = this.world.CreateBody(body);
-        this.player.torso.CreateFixture(fixture);
+        this._initTorso();
 
         this._initArm(this.player.left, -1);
         this._initArm(this.player.right, 1);
@@ -282,6 +271,25 @@
 
             this.startingWeldAJoint = this.startingWeldBJoint = this.startingWeldA = this.startingWeldB = undefined;
         }
+    };
+
+    /**
+     * Create a torso
+     * @private
+     */
+    GirpGame.prototype._initTorso = function() {
+        body = new b2BodyDef();
+        body.type = b2Body.b2_dynamicBody;
+        fixture = new b2FixtureDef();
+        fixture.shape = new b2PolygonShape();
+        fixture.shape.SetAsBox(this.playerDef.bodySizeWidth / 2, this.playerDef.bodySizeHeight / 2);
+        fixture.density = this.playerDef.torsoDensity;
+        fixture.filter.maskBits = CATEGORY_HANDHOLD;
+        fixture.filter.categoryBits = CATEGORY_PLAYER;
+        body.angularDamping = this.playerDef.bodyAngularDamping;
+        body.position.Set(this.playerDef.bodyCenterX, this.playerDef.bodyCenterY);
+        this.player.torso = this.world.CreateBody(body);
+        this.player.torso.CreateFixture(fixture);
     };
 
 
@@ -526,7 +534,7 @@
         this.armAngularDamping = 0;
         this.elbowMaxTorque = 10;
         this.elbowMotorSpeed = 20;
-        this.reachForce = 20;
+        this.reachForce = 1.4;
         this.thighLength = .80;
         this.thighWidth = .11;
         this.thighDensity = 2;
@@ -534,7 +542,7 @@
         this.thighPosX = .22;
         this.thighPosY = 1.00;
         this.hipMinAngle = 0.2;
-        this.hipMaxAngle = -4;
+        this.hipMaxAngle = -1.7;
         this.calfLength = .80;
         this.calfWidth = .08;
         this.calfDensity = 2;
