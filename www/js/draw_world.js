@@ -13,7 +13,10 @@
 
     window.setRenderContext = function(ctx) {
         context = ctx;
-        ctx.translate(50, 50);
+        ctx.scale(100, 100);
+        ctx.lineWidth = 0.01;
+
+        ctx.translate(1.50, 1.50);
     };
 
     window.drawWorld = function(world) {
@@ -33,15 +36,15 @@
                 tV = b2Math.AddVV(body.m_xf.position, b2Math.MulFV(0.5, body.m_linearVelocity));
                 context.strokeStyle = "#dd2222";
                 context.beginPath();
-                context.moveTo(body.m_xf.position.x * 100, body.m_xf.position.y * 100);
-                context.lineTo(tV.x * 100, tV.y * 100);
+                context.moveTo(body.m_xf.position.x, body.m_xf.position.y);
+                context.lineTo(tV.x, tV.y);
                 context.stroke();
 
                 tV = b2Math.AddVV(body.m_xf.position, b2Math.MulFV(0.005, body.m_force));
                 context.strokeStyle = "#22dd22";
                 context.beginPath();
-                context.moveTo(body.m_xf.position.x * 100, body.m_xf.position.y * 100);
-                context.lineTo(tV.x * 100, tV.y * 100);
+                context.moveTo(body.m_xf.position.x, body.m_xf.position.y);
+                context.lineTo(tV.x, tV.y);
                 context.stroke();
             }
 
@@ -50,8 +53,8 @@
         $.each(vectors, function(idx, item) {
             context.strokeStyle = item.col;
             context.beginPath();
-            context.moveTo(item.x1 * 100, item.y1 * 100);
-            context.lineTo(item.x2 * 100, item.y2 * 100);
+            context.moveTo(item.x1, item.y1);
+            context.lineTo(item.x2, item.y2);
             context.stroke();
         });
 
@@ -109,9 +112,7 @@
         switch (shape.m_type) {
         case b2Shape.e_circleShape:
             var pos = body.m_xf.position.Copy();
-            pos.x *= 100;
-            pos.y *= 100;
-						var r = shape.m_radius;
+            var r = shape.m_radius;
             var segments = 16.0;
             var theta = 0.0;
             var dtheta = 2.0 * Math.PI / segments;
@@ -133,16 +134,15 @@
             var pos2 = new b2Vec2(pos.x + r * ax.x, pos.y + r * ax.y);
             context.lineTo(pos2.x, pos2.y);
             break;
-            
         case b2Shape.e_polygonShape:
             var localVertices = shape.GetVertices();
             tV = b2Math.MulX(body.m_xf, localVertices[0]);
-            context.moveTo(tV.x * 100, tV.y * 100);
+            context.moveTo(tV.x, tV.y);
             for (i = 0; i < localVertices.length; i++) {
                 v = b2Math.MulX(body.m_xf, localVertices[i]);
-                context.lineTo(v.x * 100, v.y * 100);
+                context.lineTo(v.x, v.y);
             }
-            context.lineTo(tV.x * 100, tV.y * 100);
+            context.lineTo(tV.x, tV.y);
             break;
         }
         context.stroke();

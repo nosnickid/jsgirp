@@ -90,8 +90,8 @@
         this.listener.BeginContact = this._onBeginContact.bind(this);
         this.world.SetContactListener(this.listener);
 
-        this.goal = new handhold(this.world, 2.50, 2.50);
-        this.goal2 = new handhold(this.world, 2.30, 2.30);
+        this.goal = new handhold(this.world, 2.50, 2.50, this.playerDef.handRadius);
+        this.goal2 = new handhold(this.world, 2.30, 2.30, this.playerDef.handRadius);
         //this.goal = new handhold(this.world, 350, 50);
 				//this.goal2 = new handhold(this.world, 350, 50);
 
@@ -382,9 +382,9 @@
         /* position it right at the end of the arm. */
         fixture = new b2FixtureDef();
         fixture.shape = new b2CircleShape();
-        fixture.shape.SetRadius(5);
+        fixture.shape.SetRadius(this.playerDef.handRadius);
         fixture.shape.density = 0;
-        fixture.shape.SetLocalPosition(new b2Vec2(dir * this.playerDef.lowerArmLength, 0));
+        fixture.shape.SetLocalPosition(new b2Vec2(dir * this.playerDef.lowerArmLength / 2, 0));
         fixture.filter.maskBits = CATEGORY_HANDHOLD;
         fixture.filter.categoryBits = CATEGORY_PLAYER;
         fixture.filter.isSensor = true;
@@ -490,7 +490,7 @@
      * @param x      xpos
      * @param y      ypos
      */
-    var handhold = function(world, x, y, category_bits) {
+    var handhold = function(world, x, y, category_bits, radius) {
         var body;
         var fixture;
 
@@ -500,7 +500,7 @@
         body.type = b2Body.b2_staticBody;
         fixture = new b2FixtureDef();
         fixture.shape = new b2CircleShape();
-        fixture.shape.SetRadius(5);
+        fixture.shape.SetRadius(radius);
         fixture.filter.categoryBits = category_bits;
         fixture.filter.isSensor = true;
         body.position.Set(x, y);
@@ -539,6 +539,7 @@
         this.calfWidth = .08;
         this.calfDensity = 2;
         this.calfAngularDamping = 0;
+        this.handRadius = 0.05;
     };
 
 })(jQuery);
