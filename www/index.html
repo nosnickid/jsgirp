@@ -69,15 +69,30 @@
     function bindUiFromPlayerDef() {
         var fieldList = $('#playerDefEditorRows');
 
-        fieldList.empty();
+        fieldList.find('.row').remove();
 
         $.each(playerDef, function(field, value) {
             var row, label, control;
             var title = field;
+            var group;
+            var group_name;
+            var acc;
+
             title = title.replace(/([A-Z])/g, " $1");
             title = title.charAt(0).toUpperCase() + title.slice(1);
 
-            row = $('<li></li>').addClass('row');
+            group_name = title.split(" ")[0];
+            acc = $('#' + group_name);
+            if (acc.length == 0) {
+                var header;
+                header = $("<h3></h3>").text(group_name);
+                acc = $('<div></div>').attr('id', group_name);
+
+                fieldList.append(header);
+                fieldList.append(acc);
+            }
+
+            row = $('<div></div>').addClass('row');
             label = $('<label />').text(title).attr('for', 'playerDef' + field);
             control = $('<input />')
                 .attr('type', 'number')
@@ -89,8 +104,13 @@
 
             row.append(label).append(control);
 
-            fieldList.append(row);
+            acc.append(row);
         });
+
+        $('#playerDefEditorRows h3').off('click.playerDef').on('click.playerDef', function() {
+            $(this).next().toggle();
+            return false;
+        }).next().hide();
     }
 
     $(function() {
@@ -130,14 +150,14 @@
 <div id="player_editor">
     <h1>Player Editor</h1>
 
-    <ul id="playerDefEditorRows">
+    <div id="playerDefEditorRows">
 
-    </ul>
+    </div>
 
     <div class="row">
         <div>
             <label for="playerDefJson">As JSON:</label>
-            <textarea id="playerDefJson" cols="50" rows="15"></textarea>
+            <textarea id="playerDefJson" cols="50" rows="5"></textarea>
         </div>
         <div>
             <label for="loadPlayerDefFromJSON">&nbsp;</label>

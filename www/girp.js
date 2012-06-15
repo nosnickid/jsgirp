@@ -190,8 +190,8 @@
      */
     GirpGame.prototype._tick = function() {
         var timeStep = 1.0/60;
-        var velocityIterations = 5;
-        var positionIterations = 5;
+        var velocityIterations = 8;
+        var positionIterations = 6;
 
         this._tickArm(this.input.leftArm, this.player.left, this.goal);
         this._tickArm(this.input.rightArm, this.player.right, this.goal2);

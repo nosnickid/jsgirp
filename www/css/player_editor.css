@@ -15,6 +15,10 @@
     vertical-align: top;
 }
 
+#player_editor h3 {
+    font-size: 1em;
+}
+
 #player_editor .row label {
     width: 9em;
     display: inline-block;
