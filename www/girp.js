@@ -90,10 +90,10 @@
         this.listener.BeginContact = this._onBeginContact.bind(this);
         this.world.SetContactListener(this.listener);
 
-        this.goal = new handhold(this.world, 2.50, 2.50, this.playerDef.handRadius);
-        this.goal2 = new handhold(this.world, 2.30, 2.30, this.playerDef.handRadius);
+        this.goal = new handhold(this.world, 0.50, 0.50, this.playerDef.handRadius);
+        this.goal2 = new handhold(this.world, 3.50, 0.50, this.playerDef.handRadius);
         //this.goal = new handhold(this.world, 350, 50);
-				//this.goal2 = new handhold(this.world, 350, 50);
+        //this.goal2 = new handhold(this.world, 350, 50);
 
         //new handhold(this.world, 0, 0);
 
@@ -126,8 +126,8 @@
         this._initLeg(this.player.right, 1);
 
         /* start the game with the body welded to a fixed spot. */
-        this.startingWeldA = new handhold(this.world, this.playerDef.bodyCenterX + .05, this.playerDef.bodyCenterY, CATEGORY_STARTING_WELD);
-        this.startingWeldB = new handhold(this.world, this.playerDef.bodyCenterX - .05, this.playerDef.bodyCenterY, CATEGORY_STARTING_WELD);
+        this.startingWeldA = new handhold(this.world, this.playerDef.bodyCenterX + .05, this.playerDef.bodyCenterY, this.playerDef.handRadius, CATEGORY_STARTING_WELD);
+        this.startingWeldB = new handhold(this.world, this.playerDef.bodyCenterX - .05, this.playerDef.bodyCenterY, this.playerDef.handRadius, CATEGORY_STARTING_WELD);
 
         var rjd = new b2WeldJointDef();
         rjd.Initialize(this.player.torso, this.startingWeldA.body, this.startingWeldA.body.m_xf.position);
@@ -490,7 +490,7 @@
      * @param x      xpos
      * @param y      ypos
      */
-    var handhold = function(world, x, y, category_bits, radius) {
+    var handhold = function(world, x, y, radius, category_bits) {
         var body;
         var fixture;
 
@@ -509,8 +509,8 @@
     };
 
     window.GirpPlayerDef = function() {
-        this.bodyCenterX = 5;
-        this.bodyCenterY = 4;
+        this.bodyCenterX = 2.2;
+        this.bodyCenterY = 1;
         this.bodySizeWidth = .70;
         this.bodySizeHeight = 1.20;
         this.bodyAngularDamping = 0;
