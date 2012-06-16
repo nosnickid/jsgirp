@@ -50,6 +50,13 @@
         drawVector(0, -10, 0,10, "#00ff00");
 
         window.drawWorld(girp.world);
+
+        $.each(girp._binds, function (idx, item) {
+        	var x = item.body.m_xf.position.x;
+        	var y = item.body.m_xf.position.y;
+        	var text = String.fromCharCode(idx);
+        	drawText(x, y, text);
+        });
     }
 
     function dumpPlayerDefJson() {
@@ -65,6 +72,8 @@
         draw();
         dumpPlayerDefJson();
     }
+    
+
 
     function bindUiFromPlayerDef() {
         var fieldList = $('#playerDefEditorRows');
