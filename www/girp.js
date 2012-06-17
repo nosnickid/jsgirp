@@ -18,9 +18,12 @@
         b2Math = Box2D.Common.Math.b2Math,
         b2WorldManifold = Box2D.Collision.b2WorldManifold,
         b2ContactListener = Box2D.Dynamics.b2ContactListener,
-        CATEGORY_HANDHOLD = 0x1,
-        CATEGORY_PLAYER = 0x2,
-        CATEGORY_STARTING_WELD = 0x4,
+        CATEGORY_HAND_LEFT      = 0x1,
+        CATEGORY_HAND_RIGHT     = 0x2,
+        CATEGORY_PLAYER         = 0x4,
+        CATEGORY_STARTING_WELD  = 0x8,
+        CATEGORY_WORLD          = 0x10,
+        CATEGORY_HANDHOLD       = 0x20,
         undefined
         ;
 
@@ -48,45 +51,54 @@
     GirpGame.prototype._onInput = function(keyCode, down) {
 
         if (keyCode == 32) {
-                this.heave = down;
+            this.input.heave = down;
         } else if (down) {
             if (this._binds[keyCode]) {
                 var hold = this._binds[keyCode];
 
-                // Try grab for something probably.
-                if (this.player.left.armJoint && !this.player.right.armJoint) {
+                if (keyCode == this.input.rightButton || keyCode == this.input.leftButton) {
+                    // ignore key repeat inputs.
+                } else if (this.player.left.armJoint && !this.player.right.armJoint) {
                     // Reach with the right arm.
                     this.goalRight = hold;
-                    hold.body.m_fixtureList.m_filter.categoryBits = CATEGORY_HANDHOLD;
+                    hold.body.m_fixtureList.m_filter.maskBits |= CATEGORY_HAND_RIGHT;
                     this.input.rightButton = keyCode;
                     this.input.rightArm = true;
-                    delete this._binds[keyCode];
+                    window.console.log("reaching right to " + String.fromCharCode(keyCode))
                 } else if (!this.player.left.armJoint && this.player.right.armJoint) {
                     // Reach with the left arm.
                     this.goalLeft = hold;
-                    hold.body.m_fixtureList.m_filter.categoryBits = CATEGORY_HANDHOLD;
+                    hold.body.m_fixtureList.m_filter.maskBits |= CATEGORY_HAND_LEFT;
                     this.input.leftButton = keyCode;
                     this.input.leftArm = true;
-                    delete this._binds[keyCode];
+                    window.console.log("reaching left to " + String.fromCharCode(keyCode))
                 } else if (!this.player.left.armJoint && !this.player.right.armJoint) {
-                    // TODO: calculate which side its own.
-                    this.goalLeft = hold;
-                    hold.body.m_fixtureList.m_filter.categoryBits = CATEGORY_HANDHOLD;
-                    this.input.leftButton = keyCode;
-                    this.input.leftArm = true;
+                    if (hold.body.m_xf.position.x < this.player.torso.m_xf.position.x) {
+                        this.goalLeft = hold;
+                        hold.body.m_fixtureList.m_filter.maskBits |= CATEGORY_HAND_LEFT;
+                        this.input.leftButton = keyCode;
+                        this.input.leftArm = true;
+                        window.console.log("reaching left to " + String.fromCharCode(keyCode))
+                    } else {
+                        this.goalRight = hold;
+                        hold.body.m_fixtureList.m_filter.maskBits |= CATEGORY_HAND_RIGHT;
+                        this.input.rightButton = keyCode;
+                        this.input.rightArm = true;
+                        window.console.log("reaching right to " + String.fromCharCode(keyCode))
+                    }
                 }
             }
         } else if (!down) {
             if (this.input.leftButton == keyCode) {
-                this._binds[this.input.leftButton] = this.goalLeft;
-                this.goalLeft.body.m_fixtureList.m_filter.categoryBits = 0;
+                this.goalLeft.body.m_fixtureList.m_filter.maskBits = 0;
                 this.goalLeft = this.input.leftButton = undefined;
                 this.input.leftArm = false;
+                window.console.log("released left: " + String.fromCharCode(keyCode))
             } else if (this.input.rightButton == keyCode) {
-                this._binds[this.input.rightButton] = this.goalRight;
-                this.goalRight.body.m_fixtureList.m_filter.categoryBits = 0;
+                this.goalRight.body.m_fixtureList.m_filter.maskBits = 0;
                 this.goalRight = this.input.rightButton = undefined;
                 this.input.rightArm = false;
+                window.console.log("released right: " + String.fromCharCode(keyCode))
             }
         }
 
@@ -106,8 +118,8 @@
 
         /* input flags */
         this.input = {
-            leftArm: 0,
-            rightArm: 0,
+            leftArm: false,
+            rightArm: false,
             heave: 0,
             leftButton: 0,
             rightButton: 0
@@ -122,19 +134,12 @@
         this.listener.BeginContact = this._onBeginContact.bind(this);
         this.world.SetContactListener(this.listener);
 
-        this.addHold(0.7, 0.5, this.playerDef.handRadius, 0);
-        this.addHold(3.5, 0.5, this.playerDef.handRadius, 0);
-        this.addHold(1.7, 0.3, this.playerDef.handRadius, 0);
-        this.addHold(2.5, 0.8, this.playerDef.handRadius, 0);
+        this.addHold(0.7, 0.5, this.playerDef.handRadius, CATEGORY_HANDHOLD, 0);
+        this.addHold(3.5, 0.5, this.playerDef.handRadius, CATEGORY_HANDHOLD, 0);
+        this.addHold(1.7, 0.3, this.playerDef.handRadius, CATEGORY_HANDHOLD, 0);
+        this.addHold(2.5, 0.8, this.playerDef.handRadius, CATEGORY_HANDHOLD, 0);
 
-        //this.goalLeft = new handhold(this.world, 0.50, 0.50, this.playerDef.handRadius);
-        //this.goalRight = new handhold(this.world, 3.50, 0.50, this.playerDef.handRadius);
-        //this.goalLeft = new handhold(this.world, 350, 50);
-        //this.goalRight = new handhold(this.world, 350, 50);
-
-        //new handhold(this.world, 0, 0);
-
-         /* Create the player */
+        /* Create the player */
         this.player = {};
         this.player.left = { dir: 1 };
         this.player.right = { dir: -1 };
@@ -162,8 +167,8 @@
         this.startingWeldBJoint = this.world.CreateJoint(rjd);
     };
 
-    GirpGame.prototype.addHold = function (posX, posY, radius, category_bits) {
-        var hold = new handhold(this.world, posX, posY, radius, category_bits);
+    GirpGame.prototype.addHold = function (posX, posY, radius, category_bits, mask_bits) {
+        var hold = new handhold(this.world, posX, posY, radius, category_bits, mask_bits);
 
         this._addHandhold(hold);
 
@@ -248,8 +253,8 @@
         this._tickArm(this.input.leftArm, this.player.left, this.goalLeft);
         this._tickArm(this.input.rightArm, this.player.right, this.goalRight);
 
-        this._doHeave(this.player.left, this.player.left.armNode && this.heave);
-        this._doHeave(this.player.right, this.player.right.armNode && this.heave);
+        this._doHeave(this.player.left, this.player.left.armNode != undefined && this.input.heave);
+        this._doHeave(this.player.right, this.player.right.armNode != undefined && this.input.heave);
 
         this.world.Step(timeStep, velocityIterations, positionIterations);
         this.world.ClearForces();
@@ -326,17 +331,20 @@
     };
 
     /**
-     * Create a torso
-     * @private
-     */
-    GirpGame.prototype._initTorso = function() {
+    * Create a torso
+    * @private
+    */
+    GirpGame.prototype._initTorso = function () {
+        var body;
+        var fixture;
+
         body = new b2BodyDef();
         body.type = b2Body.b2_dynamicBody;
         fixture = new b2FixtureDef();
         fixture.shape = new b2PolygonShape();
         fixture.shape.SetAsBox(this.playerDef.torsoSizeWidth / 2, this.playerDef.torsoSizeHeight / 2);
         fixture.density = this.playerDef.torsoDensity;
-        fixture.filter.maskBits = CATEGORY_HANDHOLD;
+        fixture.filter.maskBits = CATEGORY_WORLD;
         fixture.filter.categoryBits = CATEGORY_PLAYER;
         body.angularDamping = this.playerDef.torsoAngularDamping;
         body.position.Set(this.playerDef.torsoCenterX, this.playerDef.torsoCenterY);
@@ -371,7 +379,7 @@
         fixture.shape = new b2PolygonShape();
         fixture.shape.SetAsBox(this.playerDef.armUpperLength / 2, this.playerDef.armUpperWidth / 2);
         fixture.density = this.playerDef.armUpperDensity;
-        fixture.filter.maskBits = 0;
+        fixture.filter.maskBits = CATEGORY_WORLD;
         fixture.filter.categoryBits = CATEGORY_PLAYER;
         dest.armUpper.CreateFixture(fixture);
 
@@ -408,7 +416,7 @@
         fixture.shape = new b2PolygonShape();
         fixture.shape.SetAsBox(this.playerDef.armLowerLength / 2, this.playerDef.armLowerWidth / 2);
         fixture.density = this.playerDef.armLowerDensity;
-        fixture.filter.maskBits = 0;
+        fixture.filter.maskBits = CATEGORY_WORLD;
         fixture.filter.categoryBits = CATEGORY_PLAYER;
         //body.angularDamping = this.playerDef.armAngularDamping;
         dest.armLower.CreateFixture(fixture);
@@ -446,7 +454,8 @@
         fixture.shape.density = 0;
         fixture.shape.SetLocalPosition(new b2Vec2(dir * this.playerDef.armLowerLength / 2, 0));
         fixture.filter.maskBits = CATEGORY_HANDHOLD;
-        fixture.filter.categoryBits = CATEGORY_PLAYER;
+        fixture.filter.categoryBits = (dir < 0) ? CATEGORY_HAND_LEFT : CATEGORY_HAND_RIGHT;
+
         fixture.filter.isSensor = true;
         dest.handShape = dest.armLower.CreateFixture(fixture).GetShape();
     };
@@ -477,7 +486,7 @@
         fixture.shape = new b2PolygonShape();
         fixture.shape.SetAsBox(this.playerDef.legThighWidth, this.playerDef.legThighLength / 2);
         fixture.density = this.playerDef.legThighDensity;
-        fixture.filter.maskBits = 0;
+        fixture.filter.maskBits = CATEGORY_WORLD;
         fixture.filter.categoryBits = CATEGORY_PLAYER;
         dest.thigh.CreateFixture(fixture);
 
@@ -517,7 +526,7 @@
         fixture.shape = new b2PolygonShape();
         fixture.shape.SetAsBox(this.playerDef.legCalfWidth, this.playerDef.legCalfLength / 2);
         fixture.density = this.playerDef.legCalfDensity;
-        fixture.filter.maskBits = 0;
+        fixture.filter.maskBits = CATEGORY_WORLD;
         fixture.filter.categoryBits = CATEGORY_PLAYER;
         dest.calf.CreateFixture(fixture);
 
@@ -550,11 +559,9 @@
      * @param x      xpos
      * @param y      ypos
      */
-    var handhold = function(world, x, y, radius, category_bits) {
+    var handhold = function (world, x, y, radius, category_bits, mask_bits) {
         var body;
         var fixture;
-
-        if (category_bits == undefined) category_bits = CATEGORY_HANDHOLD;
 
         body = new b2BodyDef();
         body.type = b2Body.b2_staticBody;
@@ -562,6 +569,7 @@
         fixture.shape = new b2CircleShape();
         fixture.shape.SetRadius(radius);
         fixture.filter.categoryBits = category_bits;
+        fixture.filter.maskBits = mask_bits;
         fixture.filter.isSensor = true;
         body.position.Set(x, y);
         this.body = world.CreateBody(body);
