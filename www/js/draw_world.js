@@ -13,7 +13,7 @@
     var texts = [];
 
     var translate = { x: -1.5, y: -1.5 };
-    var scrollBorder = { x: 1, y: 2 };
+    var scrollBorder = { x: 2, y: 3 };
     var scrollArea = { x: 0, y: 0 };
 
     var ctxDim = { x: 0, y : 0 };

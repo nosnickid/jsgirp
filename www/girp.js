@@ -115,6 +115,8 @@
         this._keys = [];
         for (var i = 65; i <= 90; i++) this._keys.push(i);
         this._binds = {};
+        this._handHolds = [];
+        this._handHoldBindDistance = 3;
 
         /* input flags */
         this.input = {
@@ -135,11 +137,12 @@
         this.world.SetContactListener(this.listener);
 
         var x,y;
-        for(x = -1; x < 6; x++) {
-            for(y = 0; y < 4; y++) {
-                this.addHold(x, y, this.playerDef.handRadius, CATEGORY_HANDHOLD, 0);
+        for(x = -10; x < 20; x++) {
+            for(y = -10; y < 14; y++) {
+                this.addHold(x + 0.5, y + 0.5, this.playerDef.handRadius, CATEGORY_HANDHOLD, 0);
             }
         }
+
         /* Create the player */
         this.player = {};
         this.player.left = { dir: 1 };
@@ -177,10 +180,9 @@
     };
 
     GirpGame.prototype._addHandhold = function (hold) {
-        var key = Math.floor(Math.random() * (this._keys.length - 1));
-        var keyCode = this._keys[key];
-        this._binds[keyCode] = hold;
-        this._keys.splice(key, 1);
+        hold.bind = undefined;
+
+        this._handHolds.push(hold);
     };
 
     GirpGame.prototype.setRenderCallback = function(fn) {
@@ -257,8 +259,59 @@
         this._doHeave(this.player.left, this.player.left.armNode != undefined && this.input.heave);
         this._doHeave(this.player.right, this.player.right.armNode != undefined && this.input.heave);
 
+        this._tickHandholds();
+
         this.world.Step(timeStep, velocityIterations, positionIterations);
         this.world.ClearForces();
+    };
+
+    /**
+     * Make sure only hand holds near the player are assigned a letter.
+     *
+     * @private
+     */
+    GirpGame.prototype._tickHandholds = function() {
+        /* calculate the distance of all the handholds from the player */
+        var playerPosition = this.player.torso.GetPosition();
+        var i;
+
+        $.each(this._handHolds, function(idx, it) {
+            var distance = it.body.GetPosition().Copy();
+            distance.Subtract(playerPosition);
+            it.distance = distance.Length();
+        });
+
+        /* put them in nearest order */
+        this._handHolds.sort(function(a, b) { return a.distance - b.distance; });
+
+        /* clear out the ones that are too far away, to free up keys */
+        for(i = 0; i < this._handHolds.length; i++) {
+            if (this._handHolds[i].distance > this._handHoldBindDistance && this._handHolds[i].bind != undefined) {
+                this._keys.push(this._handHolds[i].bind);
+                delete this._binds[this._handHolds[i].bind];
+                this._handHolds[i].bind = undefined;
+            }
+        }
+
+        /* and bind ones that are near enough but not bound yet. */
+        for(i = 0; i < this._handHolds.length; i++) {
+            if (this._handHolds[i].distance >= this._handHoldBindDistance) {
+                // early exit! woo!
+                break;
+            } else if (this._handHolds[i].bind == undefined) {
+                if (this._keys.length > 0) {
+                    var key = Math.floor(Math.random() * (this._keys.length - 1));
+                    var keyCode = this._keys[key];
+                    this._binds[keyCode] = this._handHolds[i];
+                    this._handHolds[i].bind = keyCode;
+                    this._keys.splice(key, 1);
+                } else {
+                    // window.console.log("ran out of keys!");
+                }
+            }
+        }
+
+
     };
 
     /**
