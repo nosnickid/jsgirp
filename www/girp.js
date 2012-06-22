@@ -134,11 +134,12 @@
         this.listener.BeginContact = this._onBeginContact.bind(this);
         this.world.SetContactListener(this.listener);
 
-        this.addHold(0.7, 0.5, this.playerDef.handRadius, CATEGORY_HANDHOLD, 0);
-        this.addHold(3.5, 0.5, this.playerDef.handRadius, CATEGORY_HANDHOLD, 0);
-        this.addHold(1.7, 0.3, this.playerDef.handRadius, CATEGORY_HANDHOLD, 0);
-        this.addHold(2.5, 0.8, this.playerDef.handRadius, CATEGORY_HANDHOLD, 0);
-
+        var x,y;
+        for(x = -1; x < 6; x++) {
+            for(y = 0; y < 4; y++) {
+                this.addHold(x, y, this.playerDef.handRadius, CATEGORY_HANDHOLD, 0);
+            }
+        }
         /* Create the player */
         this.player = {};
         this.player.left = { dir: 1 };

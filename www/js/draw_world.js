@@ -12,16 +12,43 @@
     var vectors = [];
     var texts = [];
 
-    window.setRenderContext = function(ctx) {
-        context = ctx;
-        ctx.scale(100, 100);
-        ctx.lineWidth = 0.01;
+    var translate = { x: -1.5, y: -1.5 };
+    var scrollBorder = { x: 1, y: 2 };
+    var scrollArea = { x: 0, y: 0 };
 
-        ctx.translate(1.50, 1.50);
+    var ctxDim = { x: 0, y : 0 };
+
+    window.setRenderCanvas = function(canvas) {
+        context = canvas.getContext('2d');
+        context.scale(100, 100);
+        context.lineWidth = 0.01;
+
+        ctxDim.x = canvas.width * 0.01;
+        ctxDim.y = canvas.height * 0.01;
+
+        scrollArea.x = (ctxDim.x - 2 * scrollBorder.x) / 2;
+        scrollArea.y = (ctxDim.y - 2 * scrollBorder.y) / 2;
     };
 
-    window.drawWorld = function(world) {
+
+    window.drawWorld = function(world, girpGame) {
         var tV;
+
+        context.save();
+        context.translate(-translate.x, -translate.y);
+
+        var center = { x: translate.x + ctxDim.x * 0.5, y: translate.y + ctxDim.y * 0.5 };
+        var playerPos = girpGame.player.torso.m_xf.position;
+        if (playerPos.x < (center.x - scrollArea.x)) {
+            translate.x = playerPos.x - scrollBorder.x;
+        } else if (playerPos.x > (center.x + scrollArea.x)) {
+            translate.x = playerPos.x - scrollArea.x * 2 - scrollBorder.x;
+        }
+        if (playerPos.y < (center.y - scrollArea.y)) {
+            translate.y = playerPos.y - scrollBorder.y;
+        } else if (playerPos.y > (center.y + scrollArea.y)) {
+            translate.y = playerPos.y - scrollArea.y * 2 - scrollBorder.y;
+        }
 
         for (var j = world.m_jointList; j; j = j.m_next) {
             drawJoint(j);
@@ -59,6 +86,7 @@
             context.stroke();
         });
 
+        context.save();
         context.scale(0.01, 0.01);
         context.lineWidth = 1;
         context.strokeStyle = "white";
@@ -69,8 +97,11 @@
             context.strokeText(item[2], item[0] * 100, item[1] * 100);
         });
 
-        context.lineWidth = 0.01;
-        context.scale(100, 100);
+        // The hax used to draw text reasonably.
+        context.restore();
+
+        // The translation around the player
+        context.restore();
 
         vectors = [];
         texts = [];
@@ -168,11 +199,11 @@
         var undef;
         if (undef == col) col = "#4400ff";
         vectors.push({x1: x1, x2: x2, y1: y1, y2: y2, col: col});
-    }
+    };
 
 
     window.drawText = function (x, y, text) {
         texts.push([x, y, text]);
-    }
+    };
 
 })(jQuery);

@@ -33,6 +33,7 @@
 
     function init() {
         playerDef = new GirpPlayerDef();
+        window.setRenderCanvas(canvas);
     }
 
     function resetGame() {
@@ -49,14 +50,14 @@
         drawVector(-10, 0, 10, 0, "#ff0000");
         drawVector(0, -10, 0,10, "#00ff00");
 
-        window.drawWorld(girp.world);
-
         $.each(girp._binds, function (idx, item) {
             var x = item.body.m_xf.position.x;
             var y = item.body.m_xf.position.y;
             var text = String.fromCharCode(idx);
             drawText(x, y, text);
         });
+
+        window.drawWorld(girp.world, girp);
     }
 
     function dumpPlayerDefJson() {
@@ -123,9 +124,6 @@
     }
 
     $(function() {
-        /* dodgy call into our dodgy renderer. */
-        window.setRenderContext(ctx);
-
         init();
         resetGame();
         girp.start();
