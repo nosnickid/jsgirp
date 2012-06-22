@@ -10,6 +10,7 @@
     window.d_velocityVector = 0;
 
     var vectors = [];
+    var texts = [];
 
     window.setRenderContext = function(ctx) {
         context = ctx;
@@ -58,7 +59,21 @@
             context.stroke();
         });
 
+        context.scale(0.01, 0.01);
+        context.lineWidth = 1;
+        context.strokeStyle = "white";
+        context.font = '15px san-serif';
+        context.textBaseline = 'bottom';
+
+        $.each(texts, function (idx, item) {
+            context.strokeText(item[2], item[0] * 100, item[1] * 100);
+        });
+
+        context.lineWidth = 0.01;
+        context.scale(100, 100);
+
         vectors = [];
+        texts = [];
     };
 
     function DrawSegment(p1, p2, color) {
@@ -154,4 +169,10 @@
         if (undef == col) col = "#4400ff";
         vectors.push({x1: x1, x2: x2, y1: y1, y2: y2, col: col});
     }
+
+
+    window.drawText = function (x, y, text) {
+        texts.push([x, y, text]);
+    }
+
 })(jQuery);
