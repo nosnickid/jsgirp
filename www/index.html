@@ -21,6 +21,35 @@
 <script src="js/draw_world.js" type="text/javascript" ></script>
 <script src="girp.js" type="text/javascript"></script>
 
+<div style="cursor: pointer;" class="resetAndGo bigButton">go</div>
+<div style="cursor: pointer;" class="bigButton" onclick="resetGame(); draw()">reset</div>
+<div style="cursor: pointer;" class="bigButton" onclick="document.getElementById('map').getSVGDocument()">reset</div>
+
+
+<object id="map" data="map01.svg" type="image/svg+xml" width="10" height="10" ></object>
+
+
+<input type="checkbox" id="vel" onchange="window.d_velocityVector = this.checked;"><label for="vel">draw velocity vectors</label>
+
+<div id="player_editor">
+    <h1>Player Editor</h1>
+
+    <div id="playerDefEditorRows">
+
+    </div>
+
+    <div class="row">
+        <div>
+            <label for="playerDefJson">As JSON:</label>
+            <textarea id="playerDefJson" cols="50" rows="5"></textarea>
+        </div>
+        <div>
+            <label for="loadPlayerDefFromJSON">&nbsp;</label>
+            <button id="loadPlayerDefFromJSON">import JSON</button>
+        </div>
+    </div>
+</div>
+
 <script type="text/javascript">
     var girp;
 
@@ -36,12 +65,26 @@
         window.setRenderCanvas(canvas);
     }
 
+    function parseSvgInputs() {
+        var holds = $(document.getElementById("map").contentDocument).find('[inkscape\\:label*="#hold"]');
+        var scaleFactor = 0.1;
+
+        $.each(holds, function(idx, item) {
+            item = $(item);
+            girp.addHold(
+                    scaleFactor * parseFloat(item.attr('x')),
+                    scaleFactor * parseFloat(item.attr('y'))
+            );
+        });
+    }
+
     function resetGame() {
         if (girp) girp.stop();
 
         girp = new GirpGame();
         girp.initWorld(playerDef);
-        girp.makeGridInputs();
+        //girp.makeGridInputs();
+        parseSvgInputs();
         girp.bindInput(window);
         girp.setRenderCallback(draw);
     }
@@ -108,11 +151,11 @@
             row = $('<div></div>').addClass('row');
             label = $('<label />').text(title).attr('for', 'playerDef' + field);
             control = $('<input />')
-                .attr('type', 'number')
-                .attr('id', 'playerDef' + field)
-                .data('player-field', field)
-                .val(value)
-                .on('change', onPlayerFieldChange);
+                    .attr('type', 'number')
+                    .attr('id', 'playerDef' + field)
+                    .data('player-field', field)
+                    .val(value)
+                    .on('change', onPlayerFieldChange);
 
 
             row.append(label).append(control);
@@ -126,7 +169,10 @@
         }).next().hide();
     }
 
-    $(function() {
+    $(window).bind("load", function() {
+        window.console.log("FFS");
+        window.console.log($('#map')[0].contentDocument);
+
         init();
         resetGame();
         girp.start();
@@ -152,36 +198,6 @@
 
 </script>
 
-<div style="cursor: pointer;" class="resetAndGo bigButton">go</div>
-<div style="cursor: pointer;" class="bigButton" onclick="resetGame(); draw()">reset</div>
-<div style="cursor: pointer;" class="bigButton" onclick="document.getElementById('map').getSVGDocument()">reset</div>
-
-
-<embed id="map" src="map01.svg" type="image/svg+xml" />
-
-
-<input type="checkbox" id="vel" onchange="window.d_velocityVector = this.checked;"><label for="vel">draw velocity vectors</label>
-
-<div id="player_editor">
-    <h1>Player Editor</h1>
-
-    <div id="playerDefEditorRows">
-
-    </div>
-
-    <div class="row">
-        <div>
-            <label for="playerDefJson">As JSON:</label>
-            <textarea id="playerDefJson" cols="50" rows="5"></textarea>
-        </div>
-        <div>
-            <label for="loadPlayerDefFromJSON">&nbsp;</label>
-            <button id="loadPlayerDefFromJSON">import JSON</button>
-        </div>
-    </div>
-
-
-</div>
 
 </body>
 </html>

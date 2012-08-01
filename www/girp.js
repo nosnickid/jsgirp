@@ -169,14 +169,15 @@
         var x, y;
         for(x = -10; x < 20; x++) {
             for(y = -10; y < 14; y++) {
-                this.addHold(x + 0.5, y + 0.5, this.playerDef.handRadius, CATEGORY_HANDHOLD, 0);
+                //this.addHold(x + 0.5, y + 0.5, this.playerDef.handRadius, CATEGORY_HANDHOLD, 0);
+                this._addHandhold(new handhold(this.world, x + 0.5, y + 0.5, this.playerDef.handRadius, CATEGORY_HANDHOLD, 0));
             }
         }
     };
 
 
-    GirpGame.prototype.addHold = function (posX, posY, radius, category_bits, mask_bits) {
-        var hold = new handhold(this.world, posX, posY, radius, category_bits, mask_bits);
+    GirpGame.prototype.addHold = function (posX, posY) {
+        var hold = new handhold(this.world, posX, posY, this.playerDef.handRadius, CATEGORY_HANDHOLD, 0);
 
         this._addHandhold(hold);
 
