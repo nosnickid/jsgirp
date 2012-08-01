@@ -41,6 +41,7 @@
 
         girp = new GirpGame();
         girp.initWorld(playerDef);
+        girp.makeGridInputs();
         girp.bindInput(window);
         girp.setRenderCallback(draw);
     }
@@ -146,11 +147,18 @@
         })
     });
 
+    //$(document.getElementById("map").getSVGDocument()).find('[inkscape\\:label*="#hold"]')
+
 
 </script>
 
 <div style="cursor: pointer;" class="resetAndGo bigButton">go</div>
 <div style="cursor: pointer;" class="bigButton" onclick="resetGame(); draw()">reset</div>
+<div style="cursor: pointer;" class="bigButton" onclick="document.getElementById('map').getSVGDocument()">reset</div>
+
+
+<embed id="map" src="map01.svg" type="image/svg+xml" />
+
 
 <input type="checkbox" id="vel" onchange="window.d_velocityVector = this.checked;"><label for="vel">draw velocity vectors</label>
 

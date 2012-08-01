@@ -137,13 +137,6 @@
         this.listener.BeginContact = this._onBeginContact.bind(this);
         this.world.SetContactListener(this.listener);
 
-        var x,y;
-        for(x = -10; x < 20; x++) {
-            for(y = -10; y < 14; y++) {
-                this.addHold(x + 0.5, y + 0.5, this.playerDef.handRadius, CATEGORY_HANDHOLD, 0);
-            }
-        }
-
         /* Create the player */
         this.player = {};
         this.player.left = { dir: 1 };
@@ -171,6 +164,16 @@
         rjd.Initialize(this.player.torso, this.startingWeldB.body, this.startingWeldB.body.m_xf.position);
         this.startingWeldBJoint = this.world.CreateJoint(rjd);
     };
+
+    GirpGame.prototype.makeGridInputs = function() {
+        var x, y;
+        for(x = -10; x < 20; x++) {
+            for(y = -10; y < 14; y++) {
+                this.addHold(x + 0.5, y + 0.5, this.playerDef.handRadius, CATEGORY_HANDHOLD, 0);
+            }
+        }
+    };
+
 
     GirpGame.prototype.addHold = function (posX, posY, radius, category_bits, mask_bits) {
         var hold = new handhold(this.world, posX, posY, radius, category_bits, mask_bits);
