@@ -53,8 +53,8 @@
         if (keyCode == 32) {
             this.input.heave = down;
         } else if (down) {
-            if (this._binds[keyCode]) {
-                var hold = this._binds[keyCode];
+            if (this._keys[keyCode] != undefined) {
+                var hold = this._keys[keyCode];
 
                 if (keyCode == this.input.rightButton || keyCode == this.input.leftButton) {
                     // ignore key repeat inputs.
@@ -112,9 +112,10 @@
 
         this.playerDef = playerDef;
 
-        this._keys = [];
-        for (var i = 65; i <= 90; i++) this._keys.push(i);
-        this._binds = {};
+        this._keysStart = 65;
+        this._keysRange = 90 - this._keysStart;
+        this._keys = {};
+        for (var i = 0; i <= this._keysRange; i++) this._keys[this._keysStart + i] = undefined;
         this._handHolds = [];
         this._handHoldBindDistance = 3;
 
@@ -287,8 +288,7 @@
         /* clear out the ones that are too far away, to free up keys */
         for(i = 0; i < this._handHolds.length; i++) {
             if (this._handHolds[i].distance > this._handHoldBindDistance && this._handHolds[i].bind != undefined) {
-                this._keys.push(this._handHolds[i].bind);
-                delete this._binds[this._handHolds[i].bind];
+                this._keys[this._handHolds[i].bind] = undefined;
                 this._handHolds[i].bind = undefined;
             }
         }
@@ -299,14 +299,18 @@
                 // early exit! woo!
                 break;
             } else if (this._handHolds[i].bind == undefined) {
-                if (this._keys.length > 0) {
-                    var key = Math.floor(Math.random() * (this._keys.length - 1));
-                    var keyCode = this._keys[key];
-                    this._binds[keyCode] = this._handHolds[i];
-                    this._handHolds[i].bind = keyCode;
-                    this._keys.splice(key, 1);
-                } else {
-                    // window.console.log("ran out of keys!");
+                var hold = this._handHolds[i];
+                var position = hold.body.GetPosition();
+                var preferredKey = Math.floor(10 * position.x + 10 * position.y) % this._keysRange;
+
+                for(var j = 0; j < this._keysRange; j++) {
+                    var thisKey = this._keysStart + ((j + preferredKey) % this._keysRange);
+                    if (this._keys[thisKey] == undefined) {
+                        /* hooray a key. bind it. */
+                        this._keys[thisKey] = hold;
+                        hold.bind = thisKey;
+                        break;
+                    }
                 }
             }
         }

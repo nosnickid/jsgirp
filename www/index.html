@@ -50,11 +50,13 @@
         drawVector(-10, 0, 10, 0, "#ff0000");
         drawVector(0, -10, 0,10, "#00ff00");
 
-        $.each(girp._binds, function (idx, item) {
-            var x = item.body.m_xf.position.x;
-            var y = item.body.m_xf.position.y;
-            var text = String.fromCharCode(idx);
-            drawText(x, y, text);
+        $.each(girp._keys, function (idx, item) {
+            if (item != undefined) {
+                var x = item.body.m_xf.position.x;
+                var y = item.body.m_xf.position.y;
+                var text = String.fromCharCode(idx);
+                drawText(x, y, text);
+            }
         });
 
         window.drawWorld(girp.world, girp);
