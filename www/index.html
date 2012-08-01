@@ -68,13 +68,13 @@
     function parseSvgInputs() {
         var holds = $(document.getElementById("map").contentDocument).find('[inkscape\\:label*="#hold"]');
         var scaleFactor = 0.1;
+        var x, y;
 
         $.each(holds, function(idx, item) {
             item = $(item);
-            girp.addHold(
-                    scaleFactor * parseFloat(item.attr('x')),
-                    scaleFactor * parseFloat(item.attr('y'))
-            );
+            x = (scaleFactor * parseFloat(item.attr('x')) + scaleFactor * parseFloat(item.attr('width'))) / 2.0;
+            y = (scaleFactor * parseFloat(item.attr('y')) + scaleFactor * parseFloat(item.attr('height'))) / 2.0;
+            girp.addHold(x, y);
         });
     }
 
