@@ -21,6 +21,7 @@
 <script src="js/polyfill.requestAnimationFrame.js" type="text/javascript"></script>
 <script src="js/draw_world.js" type="text/javascript" ></script>
 <script src="js/CamPanner.js" type="text/javascript" ></script>
+<script src="js/SvgRender.js" type="text/javascript" ></script>
 <script src="girp.js" type="text/javascript"></script>
 
 <div style="cursor: pointer;" class="resetAndGo bigButton">go</div>
@@ -62,6 +63,7 @@
     function init() {
         playerDef = new GirpPlayerDef();
         window.setRenderCanvas(canvas);
+        window.initSvgRender(canvas);
     }
 
     function parseSvgInputs() {
@@ -103,6 +105,8 @@
         });
 
         window.drawWorld(girp.world, girp);
+
+        window.doSvgRender(girp);
     }
 
     function dumpPlayerDefJson() {
