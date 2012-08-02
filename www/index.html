@@ -4,6 +4,7 @@
     <title>Javascript Box 2D Girp</title>
     <link href="css/ui-lightness/jquery-ui-1.8.21.custom.css" media="screen" rel="stylesheet" />
     <link href="css/player_editor.css" media="screen" rel="stylesheet" />
+    <link href="css/svg_render.css" media="screen" rel="stylesheet" />
 </head>
 <body>
 
@@ -19,15 +20,13 @@
 <script src="js/Box2dWeb-2.1.a.3.js" type="text/javascript" ></script>
 <script src="js/polyfill.requestAnimationFrame.js" type="text/javascript"></script>
 <script src="js/draw_world.js" type="text/javascript" ></script>
+<script src="js/CamPanner.js" type="text/javascript" ></script>
 <script src="girp.js" type="text/javascript"></script>
 
 <div style="cursor: pointer;" class="resetAndGo bigButton">go</div>
 <div style="cursor: pointer;" class="bigButton" onclick="resetGame(); draw()">reset</div>
-<div style="cursor: pointer;" class="bigButton" onclick="document.getElementById('map').getSVGDocument()">reset</div>
 
-
-<object id="map" data="map01.svg" type="image/svg+xml" width="10" height="10" ></object>
-
+<object id="map" data="map01.svg" type="image/svg+xml"></object>
 
 <input type="checkbox" id="vel" onchange="window.d_velocityVector = this.checked;"><label for="vel">draw velocity vectors</label>
 
@@ -170,9 +169,6 @@
     }
 
     $(window).bind("load", function() {
-        window.console.log("FFS");
-        window.console.log($('#map')[0].contentDocument);
-
         init();
         resetGame();
         girp.start();
@@ -192,8 +188,6 @@
             girp.start();
         })
     });
-
-    //$(document.getElementById("map").getSVGDocument()).find('[inkscape\\:label*="#hold"]')
 
 
 </script>

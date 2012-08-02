@@ -11,23 +11,18 @@
 
     var vectors = [];
     var texts = [];
-
-    var translate = { x: -1.5, y: -1.5 };
-    var scrollBorder = { x: 2, y: 3 };
-    var scrollArea = { x: 0, y: 0 };
-
-    var ctxDim = { x: 0, y : 0 };
+    var cam;
 
     window.setRenderCanvas = function(canvas) {
         context = canvas.getContext('2d');
         context.scale(100, 100);
         context.lineWidth = 0.01;
 
-        ctxDim.x = canvas.width * 0.01;
-        ctxDim.y = canvas.height * 0.01;
-
-        scrollArea.x = (ctxDim.x - 2 * scrollBorder.x) / 2;
-        scrollArea.y = (ctxDim.y - 2 * scrollBorder.y) / 2;
+        cam = new CamPanner(
+            new b2Vec2(-1.5, -1.5),                                 // initial offset
+            new b2Vec2(canvas.width * 0.01, canvas.height * 0.01), // size of render area
+            new b2Vec2(2, 3)                                       // size of scroll borders
+        );
     };
 
 
@@ -35,20 +30,10 @@
         var tV;
 
         context.save();
-        context.translate(-translate.x, -translate.y);
 
-        var center = { x: translate.x + ctxDim.x * 0.5, y: translate.y + ctxDim.y * 0.5 };
-        var playerPos = girpGame.player.torso.m_xf.position;
-        if (playerPos.x < (center.x - scrollArea.x)) {
-            translate.x = playerPos.x - scrollBorder.x;
-        } else if (playerPos.x > (center.x + scrollArea.x)) {
-            translate.x = playerPos.x - scrollArea.x * 2 - scrollBorder.x;
-        }
-        if (playerPos.y < (center.y - scrollArea.y)) {
-            translate.y = playerPos.y - scrollBorder.y;
-        } else if (playerPos.y > (center.y + scrollArea.y)) {
-            translate.y = playerPos.y - scrollArea.y * 2 - scrollBorder.y;
-        }
+        cam.update(girpGame.player.torso.m_xf.position);
+
+        context.translate(-cam.translate.x, -cam.translate.y);
 
         for (var j = world.m_jointList; j; j = j.m_next) {
             drawJoint(j);
