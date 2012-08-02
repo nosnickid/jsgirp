@@ -5,3 +5,8 @@
     top: 500px;
     left: 850px;
 }
+
+#player_svg {
+    width: 20px;
+    height: 20px;
+}

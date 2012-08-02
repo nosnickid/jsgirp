@@ -29,6 +29,8 @@
 
 <object id="map" data="map01.svg" type="image/svg+xml"></object>
 
+<object id="player_svg" data="player.svg" type="image/svg+xml"></object>
+
 <input type="checkbox" id="vel" onchange="window.d_velocityVector = this.checked;"><label for="vel">draw velocity vectors</label>
 
 <div id="player_editor">
@@ -59,11 +61,16 @@
     var canvasHeight = canvas.height;
     var timeout;
     var playerDef;
+    var svgRender;
 
     function init() {
+        var renderSvg, playerSvg;
         playerDef = new GirpPlayerDef();
         window.setRenderCanvas(canvas);
-        window.initSvgRender(canvas);
+        // This DOM digging is a bit mental.
+        playerSvg = $("#player_svg")[0].contentDocument.getElementsByTagName("svg")[0];
+        renderSvg = $("#map")[0].contentDocument.getElementsByTagName("svg")[0];
+        svgRender = new SvgRenderer(renderSvg, playerSvg);
     }
 
     function parseSvgInputs() {
@@ -88,6 +95,7 @@
         parseSvgInputs();
         girp.bindInput(window);
         girp.setRenderCallback(draw);
+        svgRender.setGame(girp);
     }
 
     function draw() {
@@ -106,7 +114,7 @@
 
         window.drawWorld(girp.world, girp);
 
-        window.doSvgRender(girp);
+        svgRender.render(girp);
     }
 
     function dumpPlayerDefJson() {
