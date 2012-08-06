@@ -80,8 +80,8 @@
 
         $.each(holds, function(idx, item) {
             item = $(item);
-            x = (scaleFactor * parseFloat(item.attr('x')) + scaleFactor * parseFloat(item.attr('width'))) / 2.0;
-            y = (scaleFactor * parseFloat(item.attr('y')) + scaleFactor * parseFloat(item.attr('height'))) / 2.0;
+            x = (scaleFactor * parseFloat(item.attr('x')) + scaleFactor * 0.5 * parseFloat(item.attr('width')));
+            y = (scaleFactor * parseFloat(item.attr('y')) + scaleFactor * 0.5 * parseFloat(item.attr('height')));
             girp.addHold(x, y);
         });
     }

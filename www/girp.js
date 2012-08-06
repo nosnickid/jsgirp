@@ -117,7 +117,7 @@
         this._keys = {};
         for (var i = 0; i <= this._keysRange; i++) this._keys[this._keysStart + i] = undefined;
         this._handHolds = [];
-        this._handHoldBindDistance = 3;
+        this._handHoldBindDistance = 6;
 
         /* input flags */
         this.input = {

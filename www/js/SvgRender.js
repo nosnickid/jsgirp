@@ -20,12 +20,16 @@
     };
 
     SvgRenderer.prototype._setupPlayerElements = function() {
+        var offs;
 
         this.playerElements = {};
 
         this.playerElements.torso = $(this.playerSvg).find('[inkscape\\:label*="#torso"]')[0];
-        this.playerElements.torso.setAttribute("x", 0);
-        this.playerElements.torso.setAttribute("y", 0);
+        offs = new b2Vec2(
+            parseFloat(this.playerElements["torso"].getAttribute("width")) / -2 - parseFloat(this.playerElements["torso"].getAttribute("x")),
+            parseFloat(this.playerElements["torso"].getAttribute("height")) / -2 - parseFloat(this.playerElements["torso"].getAttribute("y"))
+        );
+        this.playerElements["torso"].baseOffs = offs;
 
         this._setupSideElements("right");
         this._setupSideElements("left");
@@ -37,21 +41,36 @@
     };
     
     SvgRenderer.prototype._setupSideElements = function(side) {
+        var offs;
+
         this.playerElements[side + "arm_upper"] = $(this.playerSvg).find('[inkscape\\:label*="#' + side + 'arm_upper"]')[0];
-        this.playerElements[side + "arm_upper"].setAttribute("x", 0);
-        this.playerElements[side + "arm_upper"].setAttribute("y", 0);
+        offs = new b2Vec2(
+            parseFloat(this.playerElements[side + "arm_upper"].getAttribute("width")) * -0.5 - parseFloat(this.playerElements[side + "arm_upper"].getAttribute("x")),
+            parseFloat(this.playerElements[side + "arm_upper"].getAttribute("height")) * -0.5 - parseFloat(this.playerElements[side + "arm_upper"].getAttribute("y"))
+        );
+        this.playerElements[side + "arm_upper"].baseOffs = offs;
 
         this.playerElements[side + "arm_lower"] = $(this.playerSvg).find('[inkscape\\:label*="#' + side + 'arm_lower"]')[0];
-        this.playerElements[side + "arm_lower"].setAttribute("x", 0);
-        this.playerElements[side + "arm_lower"].setAttribute("y", 0);
+        offs = new b2Vec2(
+            parseFloat(this.playerElements[side + "arm_lower"].getAttribute("width")) * -0.5 - parseFloat(this.playerElements[side + "arm_lower"].getAttribute("x")),
+            parseFloat(this.playerElements[side + "arm_lower"].getAttribute("height")) * -0.5 - parseFloat(this.playerElements[side + "arm_lower"].getAttribute("y"))
+        );
+        this.playerElements[side + "arm_lower"].baseOffs = offs;
 
         this.playerElements[side + "leg_thigh"] = $(this.playerSvg).find('[inkscape\\:label*="#' + side + 'leg_thigh"]')[0];
-        this.playerElements[side + "leg_thigh"].setAttribute("x", 0);
-        this.playerElements[side + "leg_thigh"].setAttribute("y", 0);
+        offs = new b2Vec2(
+            parseFloat(this.playerElements[side + "leg_thigh"].getAttribute("width")) * -0.5 - parseFloat(this.playerElements[side + "leg_thigh"].getAttribute("x")),
+            parseFloat(this.playerElements[side + "leg_thigh"].getAttribute("height")) * -0.5 - parseFloat(this.playerElements[side + "leg_thigh"].getAttribute("y"))
+        );
+        this.playerElements[side + "leg_thigh"].baseOffs = offs;
+
 
         this.playerElements[side + "leg_calf"] = $(this.playerSvg).find('[inkscape\\:label*="#' + side + 'leg_calf"]')[0];
-        this.playerElements[side + "leg_calf"].setAttribute("x", 0);
-        this.playerElements[side + "leg_calf"].setAttribute("y", 0);
+        offs = new b2Vec2(
+            parseFloat(this.playerElements[side + "leg_calf"].getAttribute("width")) * -0.5 - parseFloat(this.playerElements[side + "leg_calf"].getAttribute("x")),
+            parseFloat(this.playerElements[side + "leg_calf"].getAttribute("height")) * -0.5 - parseFloat(this.playerElements[side + "leg_calf"].getAttribute("y"))
+        );
+        this.playerElements[side + "leg_calf"].baseOffs = offs;
     };
 
     SvgRenderer.prototype.setGame = function(girpGame) {
@@ -83,13 +102,20 @@
         this.renderSvg.setAttribute("viewBox", viewBox)
 
         function update(body, svgEl) {
-            var trans;
-            trans = "translate(" +
+            var trans = "";
+            trans += "translate(" +
                 (body.m_xf.position.x * 10) + " " +
                 (body.m_xf.position.y * 10) +
             ")";
 
             trans += " rotate(" + (180.0 / Math.PI * body.m_xf.GetAngle()) + ")";
+
+            if (svgEl.baseOffs != undefined) {
+                trans += " translate(";
+                trans += svgEl.baseOffs.x + " ";
+                trans += svgEl.baseOffs.y + ")";
+            }
+
 
             svgEl.setAttribute("transform", trans);
         }
