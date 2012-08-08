@@ -41,19 +41,19 @@
     };
 
     sounds = soundManager.setup({
-        url: "/soundManager/",
+        url: "soundManager/",
         onready: function() {
             hupSound = soundManager.createSound({
                 id: 'hup',
-                url: '/sound/hup.mp3'
+                url: 'sound/hup.mp3'
             });
             releaseSound = soundManager.createSound({
                 id: 'release',
-                url: '/sound/release.mp3'
+                url: 'sound/release.mp3'
             });
             grabHoldSound = soundManager.createSound({
                 id: 'grabHold',
-                url: '/sound/grabHold.mp3'
+                url: 'sound/grabHold.mp3'
             });
         }
     });
