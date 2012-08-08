@@ -24,6 +24,12 @@
         CATEGORY_STARTING_WELD  = 0x8,
         CATEGORY_WORLD          = 0x10,
         CATEGORY_HANDHOLD       = 0x20,
+
+        sounds,
+        hupSound,
+        releaseSound,
+        grabHoldSound,
+
         undefined
         ;
 
@@ -33,6 +39,24 @@
 
         return this;
     };
+
+    sounds = soundManager.setup({
+        url: "/soundManager/",
+        onready: function() {
+            hupSound = soundManager.createSound({
+                id: 'hup',
+                url: '/sound/hup.mp3'
+            });
+            releaseSound = soundManager.createSound({
+                id: 'release',
+                url: '/sound/release.mp3'
+            });
+            grabHoldSound = soundManager.createSound({
+                id: 'grabHold',
+                url: '/sound/grabHold.mp3'
+            });
+        }
+    });
 
     /**
      * Initialisation function to set up input listeners.
@@ -51,6 +75,12 @@
     GirpGame.prototype._onInput = function(keyCode, down) {
 
         if (keyCode == 32) {
+            if (down && !this.input.heave) {
+                if (hupSound) hupSound.play();
+            }
+            if (!down && this.input.heave) {
+                if (releaseSound) releaseSound.play();
+            }
             this.input.heave = down;
         } else if (down) {
             if (this._keys[keyCode] != undefined) {
@@ -339,6 +369,8 @@
 
             side.armNode.m_body.m_color = "#ee00ee";
             side.armJoint = this.world.CreateJoint(rjd);
+
+            if (grabHoldSound) grabHoldSound.play();
 
             this._destroyWelds();
         } else if (input && !side.armNode) {

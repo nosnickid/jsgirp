@@ -22,6 +22,12 @@ http.createServer(function (request, response) {
         case '.svg':
             contentType = "image/svg+xml";
             break;
+        case '.swf':
+            contentType = "application/x-shockwave-flash";
+            break;
+        case '.mp3':
+            contentType = "audio/mpeg3";
+            break;
     }
 
     path.exists(filePath, function(exists) {
