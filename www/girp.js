@@ -527,11 +527,11 @@
         rjd.motorSpeed = -dir * this.playerDef.elbowMotorSpeed;
         rjd.maxMotorTorque = this.playerDef.elbowMaxTorque;
         if (dir < 0) {
-            rjd.lowerAngle = 0;
-            rjd.upperAngle = 0.5 * 3.14159;
+            rjd.lowerAngle = this.playerDef.elbowMinAngle / 180.0 * Math.PI;
+            rjd.upperAngle = this.playerDef.elbowMaxAngle / 180.0 * Math.PI;
         } else {
-            rjd.lowerAngle = -0.5 * 3.14159;
-            rjd.upperAngle = 0;
+            rjd.lowerAngle = -this.playerDef.elbowMaxAngle / 180.0 * Math.PI;
+            rjd.upperAngle = this.playerDef.elbowMinAngle / 180.0 * Math.PI;
         }
         rjd.enableLimit = true;
         dest.elbow = this.world.CreateJoint(rjd);
@@ -686,6 +686,8 @@
         this.armLowerWidth = 0.08;
         this.armLowerDensity = 1;
         this.armAngularDamping = 50;
+        this.elbowMinAngle = 0;
+        this.elbowMaxAngle = 45;
         this.elbowMaxTorque = 12;
         this.elbowMotorSpeed = 20;
         this.armReachForce = 1.4;
