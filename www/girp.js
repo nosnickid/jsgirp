@@ -15,6 +15,7 @@
         b2CircleShape = Box2D.Collision.Shapes.b2CircleShape,
         b2RevoluteJointDef = Box2D.Dynamics.Joints.b2RevoluteJointDef,
         b2WeldJointDef = Box2D.Dynamics.Joints.b2WeldJointDef,
+        b2DistanceJointDef = Box2D.Dynamics.Joints.b2DistanceJointDef,
         b2Math = Box2D.Common.Math.b2Math,
         b2WorldManifold = Box2D.Collision.b2WorldManifold,
         b2ContactListener = Box2D.Dynamics.b2ContactListener,
@@ -409,7 +410,33 @@
      * @param heave
      */
     GirpGame.prototype._doHeave = function(side, heave) {
-        side.elbow.m_enableMotor = heave;
+        //side.elbow.m_enableMotor = heave;
+
+        if (heave) {
+            if (side.heaveJoint == undefined) {
+                var torsoPos;
+                var def;
+                var armLowerPos;
+
+                torsoPos = new b2Vec2(
+                    -side.dir * this.playerDef.armUpperPosX + side.dir * this.playerDef.armUpperLength / 2 * 0.9,
+                    -this.playerDef.armUpperPosY
+                );
+                armLowerPos = new b2Vec2(-side.dir * this.playerDef.armLowerLength / 2, 0);
+                def = new b2DistanceJointDef();
+                def.Initialize(this.player.torso, side.armLower, torsoPos, armLowerPos);
+                def.length = this.playerDef.heaveTensionDistance;
+                def.localAnchorA = torsoPos;
+                def.localAnchorB = armLowerPos;
+                side.heaveJoint = this.world.CreateJoint(def);
+            }
+        } else {
+            if (side.heaveJoint != undefined) {
+                this.world.DestroyJoint(side.heaveJoint);
+                side.heaveJoint = undefined;
+            }
+        }
+
         //side.shoulder.m_enableMotor = heave;
     };
 
@@ -420,7 +447,8 @@
             this.world.DestroyBody(this.startingWeldA.body);
             this.world.DestroyBody(this.startingWeldB.body);
 
-            this.startingWeldAJoint = this.startingWeldBJoint = this.startingWeldA = this.startingWeldB = undefined;
+            this.startingWeldAJoint = this.startingWeldBJoint =
+                this.startingWeldA = this.startingWeldB = undefined;
         }
     };
 
@@ -490,6 +518,7 @@
         rjd.enableLimit = true;
         //rjd.motorSpeed = -0.1;
         rjd.maxMotorTorque = this.playerDef.elbowMaxTorque;
+        rjd.motorSpeed = - this.playerDef.elbowMotorSpeed;
         dest.shoulder = this.world.CreateJoint(rjd);
         //</editor-fold>
 
@@ -686,10 +715,12 @@
         this.armLowerWidth = 0.08;
         this.armLowerDensity = 1;
         this.armAngularDamping = 50;
+
         this.elbowMinAngle = 0;
         this.elbowMaxAngle = 45;
-        this.elbowMaxTorque = 12;
-        this.elbowMotorSpeed = 20;
+        this.elbowMaxTorque = 15;
+        this.elbowMotorSpeed = 5;
+
         this.armReachForce = 1.4;
         this.legThighLength = 0.8;
         this.legThighWidth = 0.13;
@@ -704,6 +735,7 @@
         this.legCalfDensity = 2;
         this.legCalfAngularDamping = 1;
         this.handRadius = 0.05;
+        this.heaveTensionDistance = 0.15;
     };
 
 })(jQuery);
