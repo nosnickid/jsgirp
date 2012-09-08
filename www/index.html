@@ -36,6 +36,11 @@
 
 <div id="player_editor">
     <h1>Player Editor</h1>
+    
+    <div id="debug">
+        <input type="text" id="elbowAngle" value="" />
+        <input type="text" id="shoulderAngle" value="" />
+    </div>
 
     <div id="playerDefEditorRows">
 
@@ -103,6 +108,8 @@
         ctx.clearRect(-canvasWidth, -canvasHeight, 2*canvasWidth, 2*canvasHeight);
         drawVector(-10, 0, 10, 0, "#ff0000");
         drawVector(0, -10, 0,10, "#00ff00");
+
+        drawVector(0, 0, 1, 1, "#0000ff");
 
         $.each(girp._keys, function (idx, item) {
             if (item != undefined) {
