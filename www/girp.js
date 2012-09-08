@@ -410,15 +410,18 @@
      * @param heave
      */
     GirpGame.prototype._doHeave = function(side, heave) {
+        var elbowHelpEpsilon = 5;
+        var lowerArmAngle = Math.floor(360 + 180.0 / Math.PI * side.armLower.m_xf.GetAngle());
+        var upperArmAngle = Math.floor(360 + 180.0 / Math.PI * side.armUpper.m_xf.GetAngle());
+
+        $('#armLowerAngle' + side.dir).val(lowerArmAngle);
+        $('#armUpperAngle' + side.dir).val(upperArmAngle);
+        $('#elbowAngle' + side.dir).val(Math.round(side.elbow.GetJointAngle() * 180 / Math.PI));
+        $('#shoulderAngle' + side.dir).val(Math.round(side.shoulder.GetJointAngle() * 180 / Math.PI));
+
         if (heave) {
 
-            var elbowHelpEpsilon = 5;
-            var lowerArmAngle = Math.floor(360 + 180.0 / Math.PI * side.armLower.m_xf.GetAngle());
-            var upperArmAngle = Math.floor(360 + 180.0 / Math.PI * side.armUpper.m_xf.GetAngle());
-
-            side.elbow.m_enableMotor = (lowerArmAngle - upperArmAngle) < elbowHelpEpsilon;
-            $('#elbowAngle').val(lowerArmAngle);
-            $('#shoulderAngle').val(upperArmAngle);
+            side.elbow.m_enableMotor = side.dir * (lowerArmAngle - upperArmAngle) < elbowHelpEpsilon;
 
             if (side.heaveJoint == undefined) {
                 var def;
@@ -442,8 +445,6 @@
                 side.heaveJoint = undefined;
             }
         }
-
-        //side.shoulder.m_enableMotor = heave;
     };
 
     GirpGame.prototype._destroyWelds = function() {
@@ -723,7 +724,7 @@
         this.armAngularDamping = 50;
 
         this.elbowMinAngle = 0;
-        this.elbowMaxAngle = 45;
+        this.elbowMaxAngle = 135;
         this.elbowMaxTorque = 15;
         this.elbowMotorSpeed = 5;
 
