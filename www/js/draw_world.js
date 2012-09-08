@@ -109,7 +109,7 @@
         var color = "#00eeee";
         switch (joint.m_type) {
         case b2Joint.e_distanceJoint:
-            DrawSegment(p1, p2, color);
+            DrawSegment(p1, p2, "#ff4411");
             break;
         case b2Joint.e_pulleyJoint:
             var pulley = ((joint instanceof b2PulleyJoint ? joint : null));
