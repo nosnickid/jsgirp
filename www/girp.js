@@ -410,27 +410,33 @@
      * @param heave
      */
     GirpGame.prototype._doHeave = function(side, heave) {
-        //side.elbow.m_enableMotor = heave;
-
         if (heave) {
+
+            var elbowHelpEpsilon = 5;
+            var lowerArmAngle = Math.floor(360 + 180.0 / Math.PI * side.armLower.m_xf.GetAngle());
+            var upperArmAngle = Math.floor(360 + 180.0 / Math.PI * side.armUpper.m_xf.GetAngle());
+
+            side.elbow.m_enableMotor = (lowerArmAngle - upperArmAngle) < elbowHelpEpsilon;
+            $('#elbowAngle').val(lowerArmAngle);
+            $('#shoulderAngle').val(upperArmAngle);
+
             if (side.heaveJoint == undefined) {
-                var torsoPos;
                 var def;
+                var armUpperPos;
                 var armLowerPos;
 
-                torsoPos = new b2Vec2(
-                    -side.dir * this.playerDef.armUpperPosX + side.dir * this.playerDef.armUpperLength / 2 * 0.9,
-                    -this.playerDef.armUpperPosY
-                );
-                armLowerPos = new b2Vec2(-side.dir * this.playerDef.armLowerLength / 2, 0);
+                armUpperPos = new b2Vec2(0, 0);
+                armLowerPos = new b2Vec2(0, 0);
                 def = new b2DistanceJointDef();
-                def.Initialize(this.player.torso, side.armLower, torsoPos, armLowerPos);
+                def.Initialize(side.armUpper, side.armLower, armUpperPos, armLowerPos);
                 def.length = this.playerDef.heaveTensionDistance;
-                def.localAnchorA = torsoPos;
+                def.localAnchorA = armUpperPos;
                 def.localAnchorB = armLowerPos;
+                def.frequencyHz = 5;
                 side.heaveJoint = this.world.CreateJoint(def);
             }
         } else {
+            side.elbow.m_enableMotor = false;
             if (side.heaveJoint != undefined) {
                 this.world.DestroyJoint(side.heaveJoint);
                 side.heaveJoint = undefined;
@@ -735,7 +741,7 @@
         this.legCalfDensity = 2;
         this.legCalfAngularDamping = 1;
         this.handRadius = 0.05;
-        this.heaveTensionDistance = 0.15;
+        this.heaveTensionDistance = 0.1;
     };
 
 })(jQuery);
