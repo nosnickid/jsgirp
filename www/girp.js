@@ -170,8 +170,8 @@
 
         /* Create the player */
         this.player = {};
-        this.player.left = { dir: 1 };
-        this.player.right = { dir: -1 };
+        this.player.left = { dir: -1 };
+        this.player.right = { dir: 1 };
 
         /* nodes held by the relevant arm */
         this.player.left.armNode = this.player.right.armNode = undefined;
