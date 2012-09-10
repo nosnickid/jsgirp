@@ -1,8 +1,6 @@
 (function($) {
 
     var b2Vec2 = Box2D.Common.Math.b2Vec2,
-        b2Math = Box2D.Common.Math.b2Math,
-        b2Mat33 = Box2D.Common.Math.b2Mat33,
         undefined;
 
     var SvgRenderer = function(renderSvgEl, playerSvg) {
