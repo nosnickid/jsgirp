@@ -41,7 +41,7 @@
         return this;
     };
 
-    sounds = soundManager.setup({
+    /*sounds = soundManager.setup({
         url: "soundManager/",
         onready: function() {
             hupSound = soundManager.createSound({
@@ -57,7 +57,7 @@
                 url: 'sound/grabHold.mp3'
             });
         }
-    });
+    });*/
 
     /**
      * Initialisation function to set up input listeners.
