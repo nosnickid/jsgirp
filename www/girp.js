@@ -336,7 +336,7 @@
             } else if (this._handHolds[i].bind == undefined) {
                 var hold = this._handHolds[i];
                 var position = hold.body.GetPosition();
-                var preferredKey = Math.floor(10 * position.x + 10 * position.y) % this._keysRange;
+                var preferredKey = Math.floor(Math.abs(10 * position.x + 10 * position.y)) % this._keysRange;
 
                 for(var j = 0; j < this._keysRange; j++) {
                     var thisKey = this._keysStart + ((j + preferredKey) % this._keysRange);
